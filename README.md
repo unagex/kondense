@@ -1,8 +1,12 @@
 # Kondense
 
-1. Start minikube
+## Requirements
+kubernetes >=v1.27
+containerd >=v1.6.9
+
+1. Start minikube with the feature gate InPlacePodVerticalScaling.
 ```bash
-minikube start --kubernetes-version=v1.27.0 --feature-gates=InPlacePodVerticalScaling=true
+minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
 ```
 
 2. Create pod
