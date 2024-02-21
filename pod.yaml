@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-sample
+  labels:
+    app.kubernetes.io/resources-managed-by: kondense
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    # resizePolicy:
+    # - resourceName: "memory"
+    #   restartPolicy: "RestartContainer"
+    resources:
+      limits:
+        cpu: 0.2
+        memory: "200Mi"
+      requests:
+        cpu: 0.2
+        memory: "200Mi"
