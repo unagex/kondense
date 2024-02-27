@@ -16,5 +16,10 @@ kubectl apply -f pod.yaml
 
 3. Patch Pod
 ```bash
-kubectl patch pod nginx-sample --patch '{"spec":{"containers":[{"name":"nginx", "resources":{"limits":{"memory": "300Mi", "cpu":"0.3"},"requests":{"memory": "300Mi", "cpu":"0.3"}}}]}}'
+kubectl patch pod memory-test --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "100Mi", "cpu":"100m"},"requests":{"memory": "100Mi", "cpu":"100m"}}}]}}'
+```
+
+4. Scaleway add feature gate
+```bash
+scw k8s cluster update 0b4db211-543d-407e-9d3e-e3c7b9945fe5 feature-gates.0=InPlacePodVerticalScaling
 ```
