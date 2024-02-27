@@ -57,7 +57,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	// }
 	// _ = r.Patch(ctx, pod, client.MergeFrom(pod))
 
-	cmd := exec.Command("kubectl", "patch", "pod", "nginx-sample", "--patch", `{"spec":{"containers":[{"name":"nginx", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`)
+	cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
 	output, err := cmd.Output()
 	r.Log.Info(string(output))
 	if err != nil {
