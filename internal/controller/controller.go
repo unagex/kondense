@@ -6,12 +6,12 @@ import (
 	"os/exec"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
+	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -45,16 +45,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if pod.Status.QOSClass != corev1.PodQOSGuaranteed {
 		// check that the condition has not been already added
 		for _, cond := range pod.Status.Conditions {
-			if cond.Type == "DynamicResizeImpossible" {
+			if cond.Type == "DynamicResizeUnfeasible" {
 				return ctrl.Result{}, nil
 			}
 		}
 
 		pod.Status.Conditions = append(pod.Status.Conditions, corev1.PodCondition{
-			Type:    "DynamicResizeImpossible",
-			Status:  "false",
-			Reason:  "DynamicResizeImpossible",
-			Message: "dynamic resize is only allowed for pods with a quality of service of guaranteed",
+			Type:               "DynamicResizeUnfeasible",
+			Status:             "true",
+			LastTransitionTime: metav1.Now(),
+			Message:            "dynamic resize is only allowed for a pod with a quality of service of guaranteed",
 		})
 		err = r.Status().Update(ctx, pod)
 		if k8serrors.IsConflict(err) {
