@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +31,6 @@ type Reconciler struct {
 
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.Log = log.FromContext(ctx).WithName("reconciler")
-	r.Log.Info("start reconcile")
 
 	pod := &corev1.Pod{}
 	err := r.Get(ctx, req.NamespacedName, pod)
@@ -41,29 +41,40 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, fmt.Errorf("error getting pod: %w", err)
 	}
 
-	// TODO: check that the pod is in qos guaranteed
+	// check that the pod is in qos guaranteed
+	if pod.Status.QOSClass != corev1.PodQOSGuaranteed {
+		// check that the condition has not been already added
+		for _, cond := range pod.Status.Conditions {
+			if cond.Type == "DynamicResizeImpossible" {
+				return ctrl.Result{}, nil
+			}
+		}
 
-	// patch resources without restart to try
-	// we cannot use this yet, find another way.
-	// pod.Spec.Containers[0].Resources = corev1.ResourceRequirements{
-	// 	Limits: corev1.ResourceList{
-	// 		corev1.ResourceMemory: resource.MustParse("200Mi"),
-	// 		corev1.ResourceCPU:    resource.MustParse("0.3"),
-	// 	},
-	// 	Requests: corev1.ResourceList{
-	// 		corev1.ResourceMemory: resource.MustParse("200Mi"),
-	// 		corev1.ResourceCPU:    resource.MustParse("0.2"),
-	// 	},
-	// }
-	// _ = r.Patch(ctx, pod, client.MergeFrom(pod))
+		pod.Status.Conditions = append(pod.Status.Conditions, corev1.PodCondition{
+			Type:    "DynamicResizeImpossible",
+			Status:  "false",
+			Reason:  "DynamicResizeImpossible",
+			Message: "dynamic resize is only allowed for pods with a quality of service of guaranteed",
+		})
+		err = r.Status().Update(ctx, pod)
+		if k8serrors.IsConflict(err) {
+			// It means the pod has been updated by another controller. Wait 1s before retrying to update.
+			return ctrl.Result{RequeueAfter: time.Second}, nil
+		}
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("error updating pod status: %w", err)
+		}
+		r.Log.Info("successfuly updated pod status, dynamic resize is only allowed for pods with a quality of service of guaranteed")
+
+		return ctrl.Result{}, nil
+	}
 
 	cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
-	output, err := cmd.Output()
-	r.Log.Info(string(output))
+	_, err = cmd.Output()
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	r.Log.Info("patch done")
+	r.Log.Info("successfuly patched pod with new resources")
 
 	return ctrl.Result{}, nil
 }
