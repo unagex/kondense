@@ -23,3 +23,8 @@ kubectl patch pod memory-test --patch '{"spec":{"containers":[{"name":"ubuntu", 
 ```bash
 scw k8s cluster update 0b4db211-543d-407e-9d3e-e3c7b9945fe5 feature-gates.0=InPlacePodVerticalScaling
 ```
+
+5. Install cAdvisor
+```bash
+kubectl apply -f cadvisor
+```
