@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os/exec"
 	"time"
 
@@ -68,6 +69,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 		return ctrl.Result{}, nil
 	}
+
+	// res, err := http.Get("http://127.0.0.1:8080/api/v2.0/stats?type=docker&recursive=true")
+	res, err := http.Get("http://cadvisor.cadvisor.svc.cluster.local:8080/api/v2.0/stats")
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	r.Log.Info(fmt.Sprintf("%+v", res))
 
 	cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
 	_, err = cmd.Output()

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kondense-operator
+  namespace: kondense
+spec:
+  selector:
+    matchLabels:
+      app: kondense
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kondense
+    spec:
+      serviceAccountName: kondense
+      containers:
+        - name: kondense-operator
+          image: ghcr.io/unagex/kondense/controller:test
