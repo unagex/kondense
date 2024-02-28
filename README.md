@@ -4,9 +4,9 @@
 kubernetes >=v1.27
 containerd >=v1.6.9
 
-1. Start minikube with the feature gate InPlacePodVerticalScaling.
+1. Start kind with the feature gate InPlacePodVerticalScaling.
 ```bash
-minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
+kind create cluster --config=dev/kind-config.yaml
 ```
 
 2. Create pod
@@ -16,7 +16,7 @@ kubectl apply -f pod.yaml
 
 3. Patch Pod
 ```bash
-kubectl patch pod memory-test --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "100Mi", "cpu":"100m"},"requests":{"memory": "100Mi", "cpu":"100m"}}}]}}'
+kubectl patch pod memory-test --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "200Mi", "cpu":"100m"},"requests":{"memory": "200Mi", "cpu":"100m"}}}]}}'
 ```
 
 4. Scaleway add feature gate
