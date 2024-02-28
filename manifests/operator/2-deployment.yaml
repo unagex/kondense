@@ -15,7 +15,7 @@ spec:
       labels:
         app: kondense
     spec:
-      serviceAccountName: kondense
+      serviceAccountName: kondense-operator
       containers:
         - name: kondense-operator
           image: ghcr.io/unagex/kondense/controller:test
