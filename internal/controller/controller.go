@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -84,20 +85,22 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Patch Pod data ///////////////////////////////////////////////////////////////////////////////
 
-	bytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	var bearer = "Bearer " + string(bytes)
-	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods", pod.Namespace)
+	var bearer = "Bearer " + string(b)
+	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", pod.Namespace, pod.Name)
+	body := []byte(`{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "220Mi", "cpu":"100m"},"requests":{"memory": "220Mi", "cpu":"100m"}}}]}}`)
 
-	patchRequest, err := http.NewRequest("GET", url, nil)
+	patchRequest, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	patchRequest.Header.Add("Authorization", bearer)
+	patchRequest.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 	resp, err := (&http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -113,18 +116,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	r.Log.Info(string(bodyBytes))
-
-	// Do this instead to get from the kubernetes API
-	// curl -ik \
-	//  -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
-	//  https://kubernetes.default.svc.cluster.local/api/v1/namespaces/cadvisor/pods
-
-	// cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
-	// _, err = cmd.Output()
-	// if err != nil {
-	// 	return ctrl.Result{}, err
-	// }
-	// r.Log.Info("successfuly patched pod with new resources")
+	r.Log.Info("successfuly patched pod with new resources")
 
 	return ctrl.Result{}, nil
 }
