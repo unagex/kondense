@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,6 +72,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
+	// Get cAdvisor data ////////////////////////////////////////////////////////////////////////////
+
 	// res, err := http.Get("http://127.0.0.1:8080/api/v2.0/stats?type=docker&recursive=true")
 	res, err := http.Get("http://cadvisor.cadvisor.svc.cluster.local:8080/api/v2.0/stats")
 	if err != nil {
@@ -79,23 +82,49 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	r.Log.Info(fmt.Sprintf("%+v", res))
 
-	res, err = http.Get(fmt.Sprintf("https://%s:%s/api/v1/pods", os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")))
+	// Patch Pod data ///////////////////////////////////////////////////////////////////////////////
+
+	bytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	r.Log.Info(fmt.Sprintf("%+v", err.Error()))
+
+	var bearer = "Bearer " + string(bytes)
+	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods", pod.Namespace)
+
+	patchRequest, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	patchRequest.Header.Add("Authorization", bearer)
+	resp, err := (&http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}).Do(patchRequest)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	r.Log.Info(string(bodyBytes))
 
 	// Do this instead to get from the kubernetes API
 	// curl -ik \
 	//  -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
-	//  https://kubernetes.default.svc.cluster.local/api/v1/namespaces/default/pods
+	//  https://kubernetes.default.svc.cluster.local/api/v1/namespaces/cadvisor/pods
 
-	cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
-	_, err = cmd.Output()
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	r.Log.Info("successfuly patched pod with new resources")
+	// cmd := exec.Command("kubectl", "patch", "pod", pod.Name, "--patch", fmt.Sprintf(`{"spec":{"containers":[{"name": "%s", "resources":{"limits":{"memory": "200Mi", "cpu":"0.2"},"requests":{"memory": "200Mi", "cpu":"0.2"}}}]}}`, pod.Spec.Containers[0].Name))
+	// _, err = cmd.Output()
+	// if err != nil {
+	// 	return ctrl.Result{}, err
+	// }
+	// r.Log.Info("successfuly patched pod with new resources")
 
 	return ctrl.Result{}, nil
 }
