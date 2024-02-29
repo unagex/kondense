@@ -4,9 +4,21 @@ metadata:
   name: memory-test
   labels:
     app.kubernetes.io/resources-managed-by: kondense
+    app.kubernetes.io/resources-managed-exclude: should-not-scale
 spec:
   containers:
   - name: ubuntu
+    image: ubuntu
+    command: [ "/bin/bash", "-c", "--" ]
+    args: [ "while true; do sleep 30; done;" ]
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 100m
+        memory: 100Mi
+  - name: should-not-scale
     image: ubuntu
     command: [ "/bin/bash", "-c", "--" ]
     args: [ "while true; do sleep 30; done;" ]
