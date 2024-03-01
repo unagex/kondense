@@ -9,11 +9,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
+	cadvisorcli "github.com/google/cadvisor/client/v2"
+	cadvisorinfo "github.com/google/cadvisor/info/v2"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,13 +79,26 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Get cAdvisor data ////////////////////////////////////////////////////////////////////////////
 
-	// res, err := http.Get("http://127.0.0.1:8080/api/v2.0/stats?type=docker&recursive=true")
-	res, err := http.Get("http://cadvisor.cadvisor.svc.cluster.local:8080/api/v2.0/stats")
+	cclient, err := cadvisorcli.NewClient("http://cadvisor.cadvisor.svc.cluster.local:8080")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info(fmt.Sprintf("%+v", res))
+	containerID := strings.TrimPrefix(pod.Status.ContainerStatuses[0].ContainerID, "docker://")
+	res, err := cclient.Stats(containerID, &cadvisorinfo.RequestOptions{
+		Recursive: false,
+		IdType:    cadvisorinfo.TypeDocker,
+		Count:     1,
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	for _, val := range res {
+		a := val.Stats[0].Memory.Usage
+		b := val.Stats[0].Cpu.Usage.Total
+		r.Log.Info(fmt.Sprintf("memory used: %d, cpu used: %d", a, b))
+	}
 
 	// Patch Pod data ///////////////////////////////////////////////////////////////////////////////
 
