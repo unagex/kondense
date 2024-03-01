@@ -82,12 +82,12 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 ##@ Deployment
 
 .PHONY: deploy
-deploy: ## Deploy controller to kind
-	kind load docker-image ${IMG}
+deploy: ## Deploy controller to minikube
+	minikube image load ${IMG}
 	kubectl apply -f manifests/operator
 
 .PHONY: undeploy
-undeploy: ## Undeploy controller from kind
+undeploy: ## Undeploy controller from minikube
 	kubectl delete -f manifests/operator
 
 ##@ Build Dependencies
