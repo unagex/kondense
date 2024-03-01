@@ -81,11 +81,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	cclient, err := cadvisorcli.NewClient("http://cadvisor.cadvisor.svc.cluster.local:8080")
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("error creating cadvisor client: %w", err)
 	}
 
-	containerID := strings.TrimPrefix(pod.Status.ContainerStatuses[0].ContainerID, "docker://")
-	res, err := cclient.Stats(containerID, &cadvisorinfo.RequestOptions{
+	containerID := pod.Status.ContainerStatuses[0].ContainerID
+	if !strings.HasPrefix(containerID, "docker://") {
+		return ctrl.Result{}, fmt.Errorf("docker is the only container runtime allowed")
+	}
+
+	trimmedContainerID := strings.TrimPrefix(containerID, "docker://")
+	res, err := cclient.Stats(trimmedContainerID, &cadvisorinfo.RequestOptions{
 		Recursive: false,
 		IdType:    cadvisorinfo.TypeDocker,
 		Count:     1,
