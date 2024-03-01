@@ -4,7 +4,8 @@ metadata:
   name: memory-test
   labels:
     app.kubernetes.io/resources-managed-by: kondense
-    app.kubernetes.io/resources-managed-exclude: should-not-scale
+    # Find something to fix this bug, we cannot exclude multiple containers rn
+    app.kubernetes.io/resources-managed-exclude: "ubuntu should-not-scale"
 spec:
   containers:
   - name: ubuntu
