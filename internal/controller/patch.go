@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *Reconciler) PatchResources(pod *corev1.Pod, ress Resources) (reconcile.Result, error) {
+func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResources) (reconcile.Result, error) {
 	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return ctrl.Result{}, err
@@ -37,6 +37,7 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, ress Resources) (reconcile.
 	}
 
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", pod.Namespace, pod.Name)
+
 	body := []byte(`{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "230Mi", "cpu":"100m"},"requests":{"memory": "230Mi", "cpu":"100m"}}}]}}`)
 	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
 	if err != nil {

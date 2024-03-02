@@ -72,13 +72,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// get cadvisor data
-	ress, res, err := r.GetCadvisorData(pod)
+	namedResources, res, err := r.GetCadvisorData(pod)
 	if res.Requeue || err != nil {
 		return res, err
 	}
 
 	// patch pod with cadvisor data
-	return r.PatchResources(pod, ress)
+	return r.PatchResources(pod, namedResources)
 }
 
 func keepCreatePredicate() predicate.Predicate {

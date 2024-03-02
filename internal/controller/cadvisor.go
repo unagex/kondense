@@ -11,14 +11,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type Resource struct {
+type Resources struct {
 	memoryUsage uint64
 	cpuUsage    uint64
 }
 
-type Resources = map[string]Resource
+type NamedResources = map[string]Resources
 
-func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (Resources, ctrl.Result, error) {
+func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Result, error) {
 	toExclude := []string{}
 	l, ok := pod.Annotations["app.kubernetes.io/resources-managed-exclude"]
 	if ok {
@@ -26,10 +26,10 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (Resources, ctrl.Result, e
 	}
 
 	if len(pod.Status.ContainerStatuses) != len(pod.Spec.Containers) {
-		return Resources{}, ctrl.Result{RequeueAfter: time.Second, Requeue: true}, nil
+		return NamedResources{}, ctrl.Result{RequeueAfter: time.Second, Requeue: true}, nil
 	}
 
-	ress := Resources{}
+	ress := NamedResources{}
 	for _, cStat := range pod.Status.ContainerStatuses {
 		if slices.Contains(toExclude, cStat.Name) {
 			continue
@@ -38,11 +38,11 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (Resources, ctrl.Result, e
 		if cStat.ContainerID == "" {
 			// ContainerID can make some time to be populated, we requeue if it's
 			// not the case.
-			return Resources{}, ctrl.Result{RequeueAfter: 1 * time.Second, Requeue: true}, nil
+			return NamedResources{}, ctrl.Result{RequeueAfter: 1 * time.Second, Requeue: true}, nil
 		}
 
 		if !strings.HasPrefix(cStat.ContainerID, "docker://") {
-			return Resources{}, ctrl.Result{}, fmt.Errorf("docker is the only container runtime allowed")
+			return NamedResources{}, ctrl.Result{}, fmt.Errorf("docker is the only container runtime allowed")
 		}
 		trimmedContainerID := strings.TrimPrefix(cStat.ContainerID, "docker://")
 		cInfos, err := r.Cclient.Stats(trimmedContainerID, &cadvisorinfo.RequestOptions{
@@ -51,18 +51,18 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (Resources, ctrl.Result, e
 			Count:     1,
 		})
 		if err != nil {
-			return Resources{}, ctrl.Result{}, err
+			return NamedResources{}, ctrl.Result{}, err
 		}
 
 		if len(cInfos) != 1 {
-			return Resources{}, ctrl.Result{}, fmt.Errorf("should get info on only one container, got: %d", len(cInfos))
+			return NamedResources{}, ctrl.Result{}, fmt.Errorf("should get info on only one container, got: %d", len(cInfos))
 		}
 
 		for _, cInfo := range cInfos {
 			memoryUsage := cInfo.Stats[0].Memory.Usage
 			cpuUsage := cInfo.Stats[0].Cpu.Usage.Total
 
-			ress[cStat.Name] = Resource{
+			ress[cStat.Name] = Resources{
 				memoryUsage: memoryUsage,
 				cpuUsage:    cpuUsage,
 			}
