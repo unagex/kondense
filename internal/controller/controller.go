@@ -1,14 +1,8 @@
 package controller
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -77,60 +71,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	// Get cAdvisor data ////////////////////////////////////////////////////////////////////////////
-
+	// get cadvisor data
 	ress, res, err := r.GetCadvisorData(pod)
 	if res.Requeue || err != nil {
 		return res, err
 	}
 
-	_ = ress
-
-	// Patch Pod data ///////////////////////////////////////////////////////////////////////////////
-
-	b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	var bearer = "Bearer " + string(b)
-	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", pod.Namespace, pod.Name)
-	body := []byte(`{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "230Mi", "cpu":"100m"},"requests":{"memory": "230Mi", "cpu":"100m"}}}]}}`)
-
-	patchRequest, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	caCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	patchRequest.Header.Add("Authorization", bearer)
-	patchRequest.Header.Add("Content-Type", "application/strategic-merge-patch+json")
-	resp, err := (&http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
-			},
-		},
-	}).Do(patchRequest)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	r.Log.Info(string(bodyBytes))
-	r.Log.Info("successfuly patched pod with new resources")
-
-	return ctrl.Result{}, nil
+	// patch pod with cadvisor data
+	return r.PatchResources(pod, ress)
 }
 
 func keepCreatePredicate() predicate.Predicate {
