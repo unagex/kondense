@@ -38,29 +38,33 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", pod.Namespace, pod.Name)
 
-	body := []byte(`{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "230Mi", "cpu":"100m"},"requests":{"memory": "230Mi", "cpu":"100m"}}}]}}`)
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
-	if err != nil {
-		return ctrl.Result{}, err
+	for name, resources := range namedResources {
+		// Update with resources and not arbitrary 230Mi here
+		_ = resources
+
+		body := []byte(fmt.Sprintf(
+			`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "230Mi", "cpu":"100m"},"requests":{"memory": "230Mi", "cpu":"100m"}}}]}}`,
+			name))
+		req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		req.Header.Add("Authorization", bearer)
+		req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		r.Log.Info(string(bodyBytes))
+		r.Log.Info("successfuly patched container with new resources")
 	}
-	req.Header.Add("Authorization", bearer)
-	req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	r.Log.Info(string(bodyBytes))
-	r.Log.Info("successfuly patched pod with new resources")
-
-	// for _, name := range ress {
-
-	// }
 	return reconcile.Result{}, nil
 }
