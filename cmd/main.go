@@ -22,6 +22,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	cadvisorcli "github.com/google/cadvisor/client/v2"
 	"github.com/unagex/kondense/internal/controller"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -86,9 +87,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	cclient, err := cadvisorcli.NewClient("http://cadvisor.cadvisor.svc.cluster.local:8080")
+	if err != nil {
+		setupLog.Error(err, "unable to create cadvisor client")
+		os.Exit(1)
+	}
+
 	if err = (&controller.Reconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:  mgr.GetClient(),
+		Cclient: cclient,
+		Scheme:  mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller")
 		os.Exit(1)

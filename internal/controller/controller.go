@@ -9,15 +9,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/strings/slices"
 
 	cadvisorcli "github.com/google/cadvisor/client/v2"
-	cadvisorinfo "github.com/google/cadvisor/info/v2"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +31,8 @@ import (
 
 type Reconciler struct {
 	client.Client
+	Cclient *cadvisorcli.Client
+
 	Scheme *runtime.Scheme
 	Log    logr.Logger
 }
@@ -78,70 +77,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	// Get containers that should not be resized ////////////////////////////////////////////////////
-
-	toExclude := []string{}
-	l, ok := pod.Labels["app.kubernetes.io/resources-managed-exclude"]
-	if ok {
-		toExclude = strings.Split(l, ",")
-	}
-
 	// Get cAdvisor data ////////////////////////////////////////////////////////////////////////////
 
-	cclient, err := cadvisorcli.NewClient("http://cadvisor.cadvisor.svc.cluster.local:8080")
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("error creating cadvisor client: %w", err)
+	ress, res, err := r.GetCadvisorData(pod)
+	if res.Requeue || err != nil {
+		return res, err
 	}
 
-	cadvisorStats := map[string]struct {
-		memoryUsage uint64
-		cpuUsage    uint64
-	}{}
-
-	if len(pod.Status.ContainerStatuses) != len(pod.Spec.Containers) {
-		return ctrl.Result{RequeueAfter: time.Second}, nil
-	}
-
-	for _, cStat := range pod.Status.ContainerStatuses {
-		if slices.Contains(toExclude, cStat.Name) {
-			continue
-		}
-
-		if cStat.ContainerID == "" {
-			// ContainerID can make some time to be populated, we requeue if it's
-			// not the case.
-			return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
-		}
-
-		if !strings.HasPrefix(cStat.ContainerID, "docker://") {
-			return ctrl.Result{}, fmt.Errorf("docker is the only container runtime allowed")
-		}
-		trimmedContainerID := strings.TrimPrefix(cStat.ContainerID, "docker://")
-		cInfos, err := cclient.Stats(trimmedContainerID, &cadvisorinfo.RequestOptions{
-			Recursive: false,
-			IdType:    cadvisorinfo.TypeDocker,
-			Count:     1,
-		})
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-
-		if len(cInfos) != 1 {
-			return ctrl.Result{}, fmt.Errorf("should get info on only one container, got: %d", len(cInfos))
-		}
-
-		for _, cInfo := range cInfos {
-			memoryUsage := cInfo.Stats[0].Memory.Usage
-			cpuUsage := cInfo.Stats[0].Cpu.Usage.Total
-
-			cadvisorStats[cStat.Name] = struct {
-				memoryUsage uint64
-				cpuUsage    uint64
-			}{memoryUsage: memoryUsage, cpuUsage: cpuUsage}
-		}
-	}
-
-	r.Log.Info(fmt.Sprintf("got: %+v", cadvisorStats))
+	_ = ress
 
 	// Patch Pod data ///////////////////////////////////////////////////////////////////////////////
 
