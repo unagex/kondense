@@ -16,7 +16,9 @@ spec:
       serviceAccountName: cadvisor
       containers:
       - name: cadvisor
-        image: gcr.io/cadvisor/cadvisor:v0.47.1
+        image: gcr.io/cadvisor/cadvisor:v0.47.2
+        args:
+          - --store_container_labels=false
         resources:
           requests:
             memory: 400Mi
