@@ -31,3 +31,4 @@ kubectl apply -f cadvisor
 
 6. cAdvisor API
 http://localhost:8080/api/v2.1/stats/<docker container id or name in docker ps>?type=docker&count=1
+http://127.0.0.1:51464/api/v2.1/summary/<docker container is or name in docker ps>?type=docker&count=1
