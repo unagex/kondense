@@ -13,7 +13,7 @@ import (
 
 type Resources struct {
 	memoryUsage uint64
-	cpuUsage    uint64
+	cpuUsage    float32
 }
 
 type NamedResources = map[string]Resources
@@ -77,7 +77,7 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 	return ress, ctrl.Result{}, nil
 }
 
-func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (uint64, error) {
+func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (float32, error) {
 	if len(cStats) != 5 {
 		return 0, fmt.Errorf("got container stats for %d timestamps, want containers stats for 5 timestamps", len(cStats))
 	}
@@ -95,5 +95,5 @@ func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (u
 
 	r.Log.Info(fmt.Sprintf("cpu usage: %f", cpuUsage))
 
-	return 0, nil
+	return cpuUsage, nil
 }
