@@ -7,11 +7,26 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+const (
+	defaultMemoryRatio = 0.9
+	// both in bytes
+	// is 10 Mib
+	defaultMemoryMin = 10485760
+	// is 500 Gib
+	defaultMemoryMax = 536870912000
+
+	defaultCPURatio = 0.9
+	// both in vCPU
+	defaultCPUMin = 0.05
+	defaultCPUMax = 100
 )
 
 func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResources) (reconcile.Result, error) {
@@ -40,8 +55,30 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 
 	for name, resources := range namedResources {
 		// TODO: update only when memory or cpu changes
-		newMemory := resources.memoryUsage * 2
-		newCPU := resources.cpuUsage * 2
+		var memoryRatio float64
+		var cpuRatio float64
+
+		memoryRatioString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-memory-ratio", name)]
+		memoryRatio, err = strconv.ParseFloat(memoryRatioString, 64)
+		if !ok || err != nil || 0 > memoryRatio || memoryRatio > 1 {
+			memoryRatio = defaultMemoryRatio
+		}
+
+		cpuRatioString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-cpu-ratio", name)]
+		cpuRatio, err = strconv.ParseFloat(cpuRatioString, 64)
+		if !ok || err != nil || 0 > cpuRatio || cpuRatio > 1 {
+			cpuRatio = defaultCPURatio
+		}
+
+		// memory is in bytes
+		newMemory := int(float64(resources.memoryUsage) * (1 / memoryRatio))
+		newMemory = max(defaultMemoryMin, newMemory)
+		newMemory = min(defaultMemoryMax, newMemory)
+
+		// cpu is in vCPU
+		newCPU := resources.cpuUsage * (1 / cpuRatio)
+		newCPU = max(defaultCPUMin, newCPU)
+		newCPU = min(defaultCPUMax, newCPU)
 
 		body := []byte(fmt.Sprintf(
 			`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu":"%f"},"requests":{"memory": "%d", "cpu":"%f"}}}]}}`,

@@ -13,14 +13,14 @@ import (
 
 type Resources struct {
 	memoryUsage uint64
-	cpuUsage    float32
+	cpuUsage    float64
 }
 
 type NamedResources = map[string]Resources
 
 func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Result, error) {
 	toExclude := []string{}
-	l, ok := pod.Annotations["app.kubernetes.io/resources-managed-exclude"]
+	l, ok := pod.Annotations["unagex.com/resources-managed-exclude"]
 	if ok {
 		toExclude = strings.Split(l, ",")
 	}
@@ -77,7 +77,7 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 	return ress, ctrl.Result{}, nil
 }
 
-func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (float32, error) {
+func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (float64, error) {
 	if len(cStats) != 5 {
 		return 0, fmt.Errorf("got container stats for %d timestamps, want containers stats for 5 timestamps", len(cStats))
 	}
@@ -91,9 +91,7 @@ func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (f
 	timeDur := timeEnd.Sub(timeStart)
 
 	// cpu usage. 0.5 means 0.5 cpu used, 2 means 2 cpu used
-	cpuUsage := float32(cpuDur) / float32(timeDur)
-
-	r.Log.Info(fmt.Sprintf("cpu usage: %f", cpuUsage))
+	cpuUsage := float64(cpuDur) / float64(timeDur)
 
 	return cpuUsage, nil
 }

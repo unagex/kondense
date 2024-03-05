@@ -98,7 +98,7 @@ func keepCreatePredicate() predicate.Predicate {
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	filter := handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 		ls := o.GetLabels()
-		if ls["app.kubernetes.io/resources-managed-by"] != "kondense" {
+		if ls["unagex.com/resources-managed-by"] != "kondense" {
 			return nil
 		}
 

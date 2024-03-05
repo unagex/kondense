@@ -3,9 +3,11 @@ kind: Pod
 metadata:
   name: memory-test
   labels:
-    app.kubernetes.io/resources-managed-by: kondense
+    unagex.com/resources-managed-by: kondense
   annotations:
-    app.kubernetes.io/resources-managed-exclude: "should-not-scale"
+    unagex.com/resources-managed-exclude: "should-not-scale"
+    unagex.com/ubuntu-memory-ratio: "0.9"
+    unagex.com/ubuntu-cpu-ratio: "0.9"
 spec:
   containers:
   - name: ubuntu
@@ -19,14 +21,14 @@ spec:
       requests:
         cpu: 100m
         memory: 100Mi
-  - name: should-not-scale
-    image: ubuntu
-    command: [ "/bin/bash", "-c", "--" ]
-    args: [ "while true; do sleep 30; done;" ]
-    resources:
-      limits:
-        cpu: 100m
-        memory: 100Mi
-      requests:
-        cpu: 100m
-        memory: 100Mi
+  # - name: should-not-scale
+  #   image: ubuntu
+  #   command: [ "/bin/bash", "-c", "--" ]
+  #   args: [ "while true; do sleep 30; done;" ]
+  #   resources:
+  #     limits:
+  #       cpu: 100m
+  #       memory: 100Mi
+  #     requests:
+  #       cpu: 100m
+  #       memory: 100Mi
