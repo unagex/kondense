@@ -11,6 +11,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -18,7 +19,7 @@ import (
 const (
 	defaultMemoryRatio = 0.9
 	// both in bytes
-	// is 10 Mib
+	// is 10 Mi
 	defaultMemoryMin = 10485760
 	// is 500 Gib
 	defaultMemoryMax = 536870912000
@@ -70,15 +71,43 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 			cpuRatio = defaultCPURatio
 		}
 
+		memoryMinString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-memory-min", name)]
+		memoryMinResource, err := resource.ParseQuantity(memoryMinString)
+		memoryMin := memoryMinResource.Value()
+		if !ok || err != nil || 0 > memoryMin {
+			memoryMin = defaultMemoryMin
+		}
+
+		memoryMaxString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-memory-max", name)]
+		memoryMaxResource, err := resource.ParseQuantity(memoryMaxString)
+		memoryMax := memoryMaxResource.Value()
+		if !ok || err != nil || memoryMax < memoryMin {
+			memoryMax = defaultMemoryMax
+		}
+
+		cpuMinString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-cpu-min", name)]
+		cpuMinResource, err := resource.ParseQuantity(cpuMinString)
+		cpuMin := cpuMinResource.AsApproximateFloat64()
+		if !ok || err != nil || 0 > cpuMin {
+			cpuMin = defaultCPUMin
+		}
+
+		cpuMaxString, ok := pod.Annotations[fmt.Sprintf("unagex.com/%s-cpu-max", name)]
+		cpuMaxResource, err := resource.ParseQuantity(cpuMaxString)
+		cpuMax := cpuMaxResource.AsApproximateFloat64()
+		if !ok || err != nil || cpuMax < cpuMin {
+			cpuMax = defaultCPUMax
+		}
+
 		// memory is in bytes
-		newMemory := int(float64(resources.memoryUsage) * (1 / memoryRatio))
-		newMemory = max(defaultMemoryMin, newMemory)
-		newMemory = min(defaultMemoryMax, newMemory)
+		newMemory := int64(float64(resources.memoryUsage) * (1 / memoryRatio))
+		newMemory = max(memoryMin, newMemory)
+		newMemory = min(memoryMax, newMemory)
 
 		// cpu is in vCPU
 		newCPU := resources.cpuUsage * (1 / cpuRatio)
-		newCPU = max(defaultCPUMin, newCPU)
-		newCPU = min(defaultCPUMax, newCPU)
+		newCPU = max(cpuMin, newCPU)
+		newCPU = min(cpuMax, newCPU)
 
 		body := []byte(fmt.Sprintf(
 			`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu":"%f"},"requests":{"memory": "%d", "cpu":"%f"}}}]}}`,

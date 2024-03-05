@@ -8,6 +8,11 @@ metadata:
     unagex.com/resources-managed-exclude: "should-not-scale"
     unagex.com/ubuntu-memory-ratio: "0.9"
     unagex.com/ubuntu-cpu-ratio: "0.9"
+    unagex.com/ubuntu-memory-min: "200Mi"
+    unagex.com/ubuntu-memory-max: "400Mi"
+    unagex.com/ubuntu-cpu-min: "0.03"
+    unagex.com/ubuntu-cpu-max: "3"
+
 spec:
   containers:
   - name: ubuntu
