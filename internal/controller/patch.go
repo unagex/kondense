@@ -41,9 +41,11 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 	for name, resources := range namedResources {
 		// TODO: update only when memory or cpu changes
 		newMemory := resources.memoryUsage * 2
+		newCPU := resources.cpuUsage * 2
+
 		body := []byte(fmt.Sprintf(
-			`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu":"100m"},"requests":{"memory": "%d", "cpu":"100m"}}}]}}`,
-			name, newMemory, newMemory))
+			`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu":"%f"},"requests":{"memory": "%d", "cpu":"%f"}}}]}}`,
+			name, newMemory, newCPU, newMemory, newCPU))
 
 		req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
 		if err != nil {
@@ -59,7 +61,7 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 		}
 		_ = resp
 
-		r.Log.Info(fmt.Sprintf("patched container with memory: %d and cpu: TODO", newMemory))
+		r.Log.Info(fmt.Sprintf("patched container with memory: %d and cpu: %f", newMemory, newCPU))
 	}
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
