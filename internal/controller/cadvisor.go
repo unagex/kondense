@@ -14,8 +14,14 @@ import (
 const Count = 5
 
 type Resources struct {
+	// current memory usage in bytes.
 	memoryUsage uint64
-	cpuUsage    float64
+
+	// average of cpu usage for the last <Count> timestamps.
+	cpuUsage float64
+	// cpuThrottled in percent of the cpu that is throttled.
+	// e.g. cpuThrottled = 0.4 means we needed 40% more cpuUsage to have no throttling at all.
+	// cpuThrottled float64
 }
 
 type NamedResources = map[string]Resources
@@ -104,3 +110,12 @@ func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) fl
 
 	return cpuUsage
 }
+
+// throttledTimeStart := cInfo.Stats[0].Cpu.CFS.ThrottledTime
+// throttledTimeEnd := cInfo.Stats[len(cInfo.Stats)-1].Cpu.CFS.ThrottledTime
+// throttledTimeDur := time.Duration(throttledTimeEnd - throttledTimeStart)
+// var cpuThrottled float64
+// if cpuDur != 0 {
+// 	cpuThrottled = float64(throttledTimeDur) / float64(cpuDur)
+// 	// r.Log.Info(fmt.Sprintf("throttled: %d, usage: %d, division: %f", throttledTimeDur, cpuDur, cpuThrottled))
+// }
