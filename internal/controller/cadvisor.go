@@ -62,7 +62,11 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 
 		for _, cInfo := range cInfos {
 			if len(cInfo.Stats) < Count {
-				r.Log.Info(fmt.Sprintf("not enough container stats yet to calculate resources usage, want %d, got %d. Let's wait a bit.", Count, len(cInfo.Stats)))
+				r.Log.Info(
+					fmt.Sprintf("not enough container stats yet to calculate resources usage, want %d, got %d. Let's wait a bit.",
+						Count, len(cInfo.Stats)),
+					"container", cStat.Name,
+				)
 				return NamedResources{},
 					ctrl.Result{
 						Requeue: true,

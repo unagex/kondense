@@ -99,7 +99,10 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 		}
 		_ = resp
 
-		r.Log.Info(fmt.Sprintf("patched container with memory: %d and cpu: %f", newMemory, newCPU))
+		r.Log.Info(
+			fmt.Sprintf("patched container with memory: %d and cpu: %f", newMemory, newCPU),
+			"container", name,
+		)
 	}
 
 	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
