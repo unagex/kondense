@@ -102,8 +102,6 @@ func (r *Reconciler) PatchResources(pod *corev1.Pod, namedResources NamedResourc
 				fmt.Errorf("failed to patch container, want status code: %d, got %d",
 					http.StatusOK, resp.StatusCode)
 		}
-		r.Log.Info(fmt.Sprintf("status code: %d", resp.StatusCode))
-
 		r.Log.Info(
 			fmt.Sprintf("patched container with memory: %d and cpu: %f", newMemory, newCPU),
 			"container", name,
