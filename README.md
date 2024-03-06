@@ -16,7 +16,7 @@ kubectl apply -f pod.yaml
 
 3. Patch Pod
 ```bash
-kubectl patch pod memory-test --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "200Mi", "cpu":"100m"},"requests":{"memory": "200Mi", "cpu":"100m"}}}]}}'
+kubectl patch pod resources-test --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "200Mi", "cpu":"100m"},"requests":{"memory": "200Mi", "cpu":"100m"}}}]}}'
 ```
 
 4. Scaleway add feature gate
