@@ -11,6 +11,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+const Count = 5
+
 type Resources struct {
 	memoryUsage uint64
 	cpuUsage    float64
@@ -48,7 +50,7 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 		cInfos, err := r.Cclient.Stats(trimmedContainerID, &cadvisorinfo.RequestOptions{
 			Recursive: false,
 			IdType:    cadvisorinfo.TypeDocker,
-			Count:     5,
+			Count:     Count,
 		})
 		if err != nil {
 			return NamedResources{}, ctrl.Result{}, err
@@ -59,13 +61,20 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 		}
 
 		for _, cInfo := range cInfos {
-			// takes the last memory usage
-			memoryUsage := cInfo.Stats[2].Memory.Usage
-
-			cpuUsage, err := r.calculateCPUusage(cInfo.Stats)
-			if err != nil {
-				return NamedResources{}, ctrl.Result{}, err
+			if len(cInfo.Stats) < Count {
+				r.Log.Info(fmt.Sprintf("not enough container stats yet to calculate resources usage, want %d, got %d. Let's wait a bit.", Count, len(cInfo.Stats)))
+				return NamedResources{},
+					ctrl.Result{
+						Requeue: true,
+						// cInfo.Stats += 1 every 1s on average. We wait the right amount of time +1 second.
+						RequeueAfter: time.Duration(Count-len(cInfo.Stats)+1) * time.Second},
+					nil
 			}
+
+			// get last memory usage
+			memoryUsage := cInfo.Stats[len(cInfo.Stats)-1].Memory.Usage
+			// calculate cpu usage by comparing extreme timestamps
+			cpuUsage := r.calculateCPUusage(cInfo.Stats)
 
 			ress[cStat.Name] = Resources{
 				memoryUsage: memoryUsage,
@@ -77,11 +86,7 @@ func (r *Reconciler) GetCadvisorData(pod *corev1.Pod) (NamedResources, ctrl.Resu
 	return ress, ctrl.Result{}, nil
 }
 
-func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (float64, error) {
-	if len(cStats) != 5 {
-		return 0, fmt.Errorf("got container stats for %d timestamps, want containers stats for 5 timestamps", len(cStats))
-	}
-
+func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) float64 {
 	cpuStart := cStats[0].Cpu.Usage.Total
 	cpuEnd := cStats[len(cStats)-1].Cpu.Usage.Total
 	cpuDur := time.Duration(cpuEnd - cpuStart)
@@ -93,5 +98,5 @@ func (r *Reconciler) calculateCPUusage(cStats []*cadvisorinfo.ContainerStats) (f
 	// cpu usage. 0.5 means 0.5 cpu used, 2 means 2 cpu used
 	cpuUsage := float64(cpuDur) / float64(timeDur)
 
-	return cpuUsage, nil
+	return cpuUsage
 }
