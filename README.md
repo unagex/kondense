@@ -23,12 +23,3 @@ kubectl patch pod resources-test --patch '{"spec":{"containers":[{"name":"ubuntu
 ```bash
 scw k8s cluster update 0b4db211-543d-407e-9d3e-e3c7b9945fe5 feature-gates.0=InPlacePodVerticalScaling
 ```
-
-5. Install cAdvisor
-```bash
-kubectl apply -f cadvisor
-```
-
-6. cAdvisor API
-http://localhost:8080/api/v2.1/stats/<docker container id or name in docker ps>?type=docker&count=1
-http://127.0.0.1:51464/api/v2.1/summary/<docker container is or name in docker ps>?type=docker&count=1
