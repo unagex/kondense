@@ -9,3 +9,6 @@ build:
 deploy:
 	minikube image load ${IMG}
 	kubectl apply -f manifests
+
+undeploy:
+	kubectl delete -f manifests
