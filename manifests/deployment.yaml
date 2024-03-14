@@ -14,6 +14,7 @@ spec:
       labels:
         app: test-kondense
     spec:
+      serviceAccountName: kondense
       containers:
         - name: ubuntu
           image: ubuntu

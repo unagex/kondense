@@ -6,8 +6,10 @@ all: build
 build:
 	docker build -t ${IMG} .
 
-deploy:
+load:
 	minikube image load ${IMG}
+
+deploy:
 	kubectl apply -f manifests
 
 undeploy:
