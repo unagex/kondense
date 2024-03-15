@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/unagex/kondense/pkg/controller"
 	"github.com/unagex/kondense/pkg/manager"
@@ -28,9 +29,20 @@ func main() {
 		}
 	}()
 
+	// get pod name and namespace
+	name := os.Getenv("HOSTNAME")
+	namespaceByte, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		l.Fatal(err)
+	}
+	namespace := string(namespaceByte)
+
 	reconciler := controller.Reconciler{
 		Client: mgr.GetClient(),
 		L:      l,
+
+		Name:      name,
+		Namespace: namespace,
 	}
 
 	reconciler.Reconcile()
