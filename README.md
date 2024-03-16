@@ -6,7 +6,7 @@ containerd >=v1.6.9
 
 1. Start kind with the feature gate InPlacePodVerticalScaling.
 ```bash
-kind create cluster --config=dev/kind-config.yaml
+minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
 ```
 
 2. Create pod
