@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -30,11 +29,14 @@ func (r Reconciler) Reconcile() {
 			r.L.Fatal(err)
 		}
 
-		fmt.Println(pod)
+		for _, container := range pod.Spec.Containers {
+			_ = container
+			// 1. get pressures with kubectl for every containers exept kondense.
+			//
+			// cat need to be installed in the kondensed container
+			// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /proc/pressure/cpu > ubuntu-cpu
 
-		// TODO: make the patch here
-		// body := []byte(fmt.Sprintf(
-		// 	`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu":"%f"},"requests":{"memory": "%d", "cpu":"%f"}}}]}}`,
-		// 	name, newMemory, newCPU, newMemory, newCPU))
+			// 2. patch container resource for every containers.
+		}
 	}
 }
