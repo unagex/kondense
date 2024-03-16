@@ -18,8 +18,7 @@ spec:
       containers:
         - name: ubuntu
           image: ubuntu
-          command: [ "/bin/bash", "-c", "--" ]
-          args: [ "while true; do sleep 30; done;" ]
+          command: [ "sleep", "1d" ]
           resources:
             limits:
               cpu: 100m
