@@ -4,12 +4,24 @@ import (
 	"context"
 	"log"
 	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+type Resources struct {
+	Memory Pressure
+}
+
+type Pressure struct {
+	Total     int
+	PrevTotal int
+	Current   int
+}
 
 type Reconciler struct {
 	client.Client
@@ -20,6 +32,8 @@ type Reconciler struct {
 }
 
 func (r Reconciler) Reconcile() {
+	res := map[string]Resources{}
+
 	for {
 		time.Sleep(5 * time.Second)
 
@@ -32,28 +46,58 @@ func (r Reconciler) Reconcile() {
 		}
 
 		for _, container := range pod.Spec.Containers {
-			_ = container
+			// initialize container res if not already initialized
+			if _, ok := res[container.Name]; !ok {
+				res[container.Name] = Resources{}
+			}
+
 			// 1. get pressures with kubectl for every containers.
 			//
 			// cat need to be installed in the kondensed container
-			// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /proc/pressure/cpu > ubuntu-cpu
+			// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /proc/pressure/cpu
 			cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/proc/pressure/cpu")
-			// r.L.Println(strings.Join(cmd.Args, " "))
-			cpuOutput, err := cmd.Output()
+			cpuPressureOutput, err := cmd.Output()
 			if err != nil {
 				r.L.Println(err)
 				continue
 			}
+			_ = cpuPressureOutput
 
 			cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/proc/pressure/memory")
-			memoryOutput, err := cmd.Output()
+			memoryPressureOutput, err := cmd.Output()
 			if err != nil {
 				r.L.Println(err)
 				continue
 			}
 
-			r.L.Println(string(cpuOutput), string(memoryOutput))
-			//
+			r.L.Println(container.Name)
+			r.L.Println(string(memoryPressureOutput))
+
+			// initialize memory to the current use.
+			cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.current")
+			memoryCurrentOutput, err := cmd.Output()
+			if err != nil {
+				r.L.Println(err)
+				continue
+			}
+			_ = memoryCurrentOutput
+
+			memoryPressureTmp := strings.Split(string(memoryPressureOutput), " ")[4]
+			memoryPressureTmp = strings.TrimPrefix(memoryPressureTmp, "total=")
+			memoryPressureTmp = strings.TrimSuffix(memoryPressureTmp, "\nfull")
+			memoryPressure, err := strconv.Atoi(memoryPressureTmp)
+			if err != nil {
+				r.L.Println(err)
+				continue
+			}
+
+			// update variables
+			val := res[container.Name]
+
+			val.Memory.Total = memoryPressure
+			res[container.Name] = val
+
+			r.L.Println(res)
 
 			// 2. patch container resource for every containers.
 		}
