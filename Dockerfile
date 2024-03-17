@@ -1,7 +1,5 @@
 # Build the manager binary
 FROM golang:1.21 as manager
-ARG TARGETOS
-ARG TARGETARCH
 
 WORKDIR /
 
@@ -13,7 +11,7 @@ RUN go mod download
 COPY cmd cmd
 COPY pkg pkg
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
+RUN CGO_ENABLED=0 go build -a -o manager cmd/main.go
 
 # build kubectl binary
 FROM curlimages/curl:latest as kubectl
