@@ -54,8 +54,8 @@ func (r Reconciler) Reconcile() {
 			// 1. get pressures with kubectl for every containers.
 			//
 			// cat need to be installed in the kondensed container
-			// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /proc/pressure/cpu
-			cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/proc/pressure/cpu")
+			// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /sys/fs/cgroup/cpu.pressure
+			cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/cpu.pressure")
 			cpuPressureOutput, err := cmd.Output()
 			if err != nil {
 				r.L.Println(err)
@@ -63,7 +63,7 @@ func (r Reconciler) Reconcile() {
 			}
 			_ = cpuPressureOutput
 
-			cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/proc/pressure/memory")
+			cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
 			memoryPressureOutput, err := cmd.Output()
 			if err != nil {
 				r.L.Println(err)
