@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: test-kondense
+      annotations:
+        unagex.com/kondense-exclude: "kondense"
     spec:
       serviceAccountName: kondense
       containers:
