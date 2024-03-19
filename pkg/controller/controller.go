@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os/exec"
 	"strconv"
@@ -17,9 +18,18 @@ type Resources struct {
 	Memory Pressure
 }
 
+func (r *Resources) String() string {
+	return fmt.Sprintf("memory: {total: %d, prevTotal: %d, limit: %d, current: %d}",
+		r.Memory.Total,
+		r.Memory.PrevTotal,
+		r.Memory.Limit,
+		r.Memory.Current)
+}
+
 type Pressure struct {
 	Total     int
 	PrevTotal int
+	Limit     int64
 	Current   int
 }
 
@@ -32,7 +42,7 @@ type Reconciler struct {
 }
 
 func (r Reconciler) Reconcile() {
-	res := map[string]Resources{}
+	res := map[string]*Resources{}
 
 	for {
 		time.Sleep(5 * time.Second)
@@ -45,10 +55,21 @@ func (r Reconciler) Reconcile() {
 			continue
 		}
 
+		// populates memory limit
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			// initialize container res if not already initialized
+			if _, ok := res[containerStatus.Name]; !ok {
+				res[containerStatus.Name] = &Resources{}
+			}
+
+			limit := containerStatus.AllocatedResources.Memory().Value()
+			res[containerStatus.Name].Memory.Limit = limit
+		}
+
 		for _, container := range pod.Spec.Containers {
 			// initialize container res if not already initialized
 			if _, ok := res[container.Name]; !ok {
-				res[container.Name] = Resources{}
+				res[container.Name] = &Resources{}
 			}
 
 			// 1. get pressures with kubectl for every containers.
@@ -70,9 +91,6 @@ func (r Reconciler) Reconcile() {
 				continue
 			}
 
-			r.L.Println(container.Name)
-			r.L.Println(string(memoryPressureOutput))
-
 			// initialize memory to the current use.
 			cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.current")
 			memoryCurrentOutput, err := cmd.Output()
@@ -92,10 +110,8 @@ func (r Reconciler) Reconcile() {
 			}
 
 			// update variables
-			val := res[container.Name]
-
-			val.Memory.Total = memoryPressure
-			res[container.Name] = val
+			res[container.Name].Memory.PrevTotal = res[container.Name].Memory.Total
+			res[container.Name].Memory.Total = memoryPressure
 
 			r.L.Println(res)
 
