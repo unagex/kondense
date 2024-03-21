@@ -110,7 +110,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	}
 	mem.AVG300 = avg300
 
-	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%f memory_pressure_avg60=%f memory_pressure_avg300=%f time_to_probe=%d total=%d delta=%d integral=%d",
+	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_probe=%d total=%d delta=%d integral=%d",
 		container.Name, mem.Limit, avg10, avg60, avg300,
 		mem.GraceTicks, total, delta, mem.Integral)
 
