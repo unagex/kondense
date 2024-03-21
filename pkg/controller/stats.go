@@ -1,5 +1,7 @@
 package controller
 
+type ContainerStats map[string]*Stats
+
 type Stats struct {
 	Mem Memory
 }

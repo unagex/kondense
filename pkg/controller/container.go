@@ -50,7 +50,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 		return err
 	}
 
-	s := r.Res[container.Name]
+	s := r.CStats[container.Name]
 
 	delta := total - s.Mem.PrevTotal
 	s.Mem.PrevTotal = total
@@ -81,14 +81,15 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	s.Mem.AVG300 = avg300
 
 	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_probe=%d total=%d delta=%d integral=%d",
-		container.Name, s.Mem.Limit, avg10, avg60, avg300,
+		container.Name, s.Mem.Limit,
+		avg10, avg60, avg300,
 		s.Mem.GraceTicks, total, delta, s.Mem.Integral)
 
 	return nil
 }
 
 func (r Reconciler) KondenseContainer(container corev1.Container) error {
-	s := r.Res[container.Name]
+	s := r.CStats[container.Name]
 
 	// conf.pressure = 10 * 1000 as default
 	if s.Mem.Integral > 10*1000 {
@@ -129,7 +130,7 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
-	newMemory := int(float64(r.Res[containerName].Mem.Limit) * (1 + factor))
+	newMemory := int(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
 	body := []byte(fmt.Sprintf(
 		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d"},"requests":{"memory": "%d"}}}]}}`,
 		containerName, newMemory, newMemory))
@@ -157,7 +158,7 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 	}
 	r.L.Printf("patched container %s with factor: %f and new memory: %d", containerName, factor, newMemory)
 
-	r.Res[containerName].Mem.Integral = 0
+	r.CStats[containerName].Mem.Integral = 0
 
 	return nil
 }
