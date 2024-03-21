@@ -16,11 +16,11 @@ func (r Reconciler) InitializeRes(pod *corev1.Pod) {
 		// initialize container res if not already initialized
 		if _, ok := r.Res[containerStatus.Name]; !ok {
 			// GraceTicks and Interval default to 6.
-			r.Res[containerStatus.Name] = &Resources{
-				Memory: Pressure{GraceTicks: 6, Interval: 6}}
+			r.Res[containerStatus.Name] = &Stats{
+				Mem: Memory{GraceTicks: 6, Interval: 6}}
 		}
 
 		limit := containerStatus.AllocatedResources.Memory().Value()
-		r.Res[containerStatus.Name].Memory.Limit = limit
+		r.Res[containerStatus.Name].Mem.Limit = limit
 	}
 }

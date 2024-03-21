@@ -18,11 +18,11 @@ type Reconciler struct {
 	Namespace string
 	Name      string
 
-	Res map[string]*Resources
+	Res map[string]*Stats
 }
 
 func (r Reconciler) Reconcile() {
-	r.Res = map[string]*Resources{}
+	r.Res = map[string]*Stats{}
 
 	for {
 		time.Sleep(1 * time.Second)
