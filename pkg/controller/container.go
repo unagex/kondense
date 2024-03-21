@@ -25,59 +25,11 @@ func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Containe
 		return
 	}
 
-	// 1. get pressures with kubectl for every containers.
-	//
-	// cat need to be installed in the kondensed container
-	// kubectl exec -i test-kondense-7c8f646f79-5l824 -c ubuntu -- cat /sys/fs/cgroup/cpu.pressure
-	cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/cpu.pressure")
-	cpuPressureOutput, err := cmd.Output()
+	err := r.UpdateStats(pod, container)
 	if err != nil {
-		r.L.Println(err)
+		r.L.Print(err)
 		return
 	}
-	_ = cpuPressureOutput
-
-	cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
-	memoryPressureOutput, err := cmd.Output()
-	if err != nil {
-		r.L.Println(err)
-		return
-	}
-
-	// initialize memory to the current use.
-	cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.current")
-	memoryCurrentOutput, err := cmd.Output()
-	if err != nil {
-		r.L.Println(err)
-		return
-	}
-	_ = memoryCurrentOutput
-
-	memoryPressureTmp := strings.Split(string(memoryPressureOutput), " ")[4]
-	memoryPressureTmp = strings.TrimPrefix(memoryPressureTmp, "total=")
-	memoryPressureTmp = strings.TrimSuffix(memoryPressureTmp, "\nfull")
-	memoryPressure, err := strconv.ParseInt(memoryPressureTmp, 10, 64)
-	if err != nil {
-		r.L.Println(err)
-		return
-	}
-
-	delta := memoryPressure - r.Res[container.Name].Memory.PrevTotal
-	r.Res[container.Name].Memory.PrevTotal = memoryPressure
-	r.Res[container.Name].Memory.Integral += delta
-
-	memoryPressureAVG10Tmp := strings.Split(string(memoryPressureOutput), " ")[1]
-	memoryPressureAVG10Tmp = strings.TrimPrefix(memoryPressureAVG10Tmp, "avg10=")
-	memoryPressureAVG10, err := strconv.ParseFloat(memoryPressureAVG10Tmp, 64)
-	if err != nil {
-		r.L.Println(err)
-		return
-	}
-	r.Res[container.Name].Memory.AVG10 = memoryPressureAVG10
-
-	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%f time_to_probe=%d total=%d delta=%d integral=%d",
-		container.Name, r.Res[container.Name].Memory.Limit, memoryPressureAVG10,
-		r.Res[container.Name].Memory.GraceTicks, memoryPressure, delta, r.Res[container.Name].Memory.Integral)
 
 	// conf.pressure = 10 * 1000 as default
 	if r.Res[container.Name].Memory.Integral > 10*1000 {
@@ -88,7 +40,7 @@ func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Containe
 		// max_backoff = 1 as default
 		adj = min(adj*1, 1)
 
-		err = r.Adjust(container.Name, adj)
+		err := r.Adjust(container.Name, adj)
 		if err != nil {
 			r.L.Println(err)
 		}
@@ -113,6 +65,56 @@ func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Containe
 	}
 	r.Res[container.Name].Memory.GraceTicks = r.Res[container.Name].Memory.Interval - 1
 
+}
+
+func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
+	cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
+	output, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	totalTmp := strings.Split(string(output), " ")[4]
+	totalTmp = strings.TrimPrefix(totalTmp, "total=")
+	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
+	total, err := strconv.ParseInt(totalTmp, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	delta := total - r.Res[container.Name].Memory.PrevTotal
+	r.Res[container.Name].Memory.PrevTotal = total
+	r.Res[container.Name].Memory.Integral += delta
+
+	avg10Tmp := strings.Split(string(output), " ")[1]
+	avg10Tmp = strings.TrimPrefix(avg10Tmp, "avg10=")
+	avg10, err := strconv.ParseFloat(avg10Tmp, 64)
+	if err != nil {
+		return err
+	}
+	r.Res[container.Name].Memory.AVG10 = avg10
+
+	avg60Tmp := strings.Split(string(output), " ")[2]
+	avg60Tmp = strings.TrimPrefix(avg60Tmp, "avg60=")
+	avg60, err := strconv.ParseFloat(avg60Tmp, 64)
+	if err != nil {
+		return err
+	}
+	r.Res[container.Name].Memory.AVG60 = avg60
+
+	avg300Tmp := strings.Split(string(output), " ")[3]
+	avg300Tmp = strings.TrimPrefix(avg300Tmp, "avg300=")
+	avg300, err := strconv.ParseFloat(avg300Tmp, 64)
+	if err != nil {
+		return err
+	}
+	r.Res[container.Name].Memory.AVG300 = avg300
+
+	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%f memory_pressure_avg60=%f memory_pressure_avg300=%f time_to_probe=%d total=%d delta=%d integral=%d",
+		container.Name, r.Res[container.Name].Memory.Limit, avg10, avg60, avg300,
+		r.Res[container.Name].Memory.GraceTicks, total, delta, r.Res[container.Name].Memory.Integral)
+
+	return nil
 }
 
 func (r Reconciler) Adjust(containerName string, factor float64) error {
