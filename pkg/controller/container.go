@@ -15,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
+func (r Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	exclude := containersToExclude(pod)
@@ -29,40 +29,10 @@ func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Containe
 		return
 	}
 
-	// conf.pressure = 10 * 1000 as default
-	if r.Res[container.Name].Mem.Integral > 10*1000 {
-		// Back off exponentially as we deviate from the target pressure.
-		diff := r.Res[container.Name].Mem.Integral / (10 * 1000)
-		// coeff_backoff = 20 as default
-		adj := math.Pow(float64(diff/20), 2)
-		// max_backoff = 1 as default
-		adj = min(adj*1, 1)
-
-		err := r.Adjust(container.Name, adj)
-		if err != nil {
-			r.L.Println(err)
-		}
-		r.Res[container.Name].Mem.GraceTicks = r.Res[container.Name].Mem.Interval - 1
-		return
-	}
-
-	if r.Res[container.Name].Mem.GraceTicks > 0 {
-		r.Res[container.Name].Mem.GraceTicks -= 1
-		return
-	}
-	// Tighten the limit.
-	diff := (10 * 1000) / max(r.Res[container.Name].Mem.Integral, 1)
-	// coeffProbe default to 10
-	adj := math.Pow(float64(diff/10), 2)
-	// max_probe default is 0.01
-	adj = min(adj*0.01, 0.01)
-
-	err = r.Adjust(container.Name, -adj)
+	err = r.KondenseContainer(container)
 	if err != nil {
-		r.L.Println(err)
+		r.L.Print(err)
 	}
-	r.Res[container.Name].Mem.GraceTicks = r.Res[container.Name].Mem.Interval - 1
-
 }
 
 func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
@@ -80,11 +50,11 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 		return err
 	}
 
-	mem := r.Res[container.Name].Mem
+	s := r.Res[container.Name]
 
-	delta := total - mem.PrevTotal
-	mem.PrevTotal = total
-	mem.Integral += delta
+	delta := total - s.Mem.PrevTotal
+	s.Mem.PrevTotal = total
+	s.Mem.Integral += delta
 
 	avg10Tmp := strings.Split(string(output), " ")[1]
 	avg10Tmp = strings.TrimPrefix(avg10Tmp, "avg10=")
@@ -92,7 +62,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	mem.AVG10 = avg10
+	s.Mem.AVG10 = avg10
 
 	avg60Tmp := strings.Split(string(output), " ")[2]
 	avg60Tmp = strings.TrimPrefix(avg60Tmp, "avg60=")
@@ -100,7 +70,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	mem.AVG60 = avg60
+	s.Mem.AVG60 = avg60
 
 	avg300Tmp := strings.Split(string(output), " ")[3]
 	avg300Tmp = strings.TrimPrefix(avg300Tmp, "avg300=")
@@ -108,13 +78,47 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	mem.AVG300 = avg300
+	s.Mem.AVG300 = avg300
 
 	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_probe=%d total=%d delta=%d integral=%d",
-		container.Name, mem.Limit, avg10, avg60, avg300,
-		mem.GraceTicks, total, delta, mem.Integral)
+		container.Name, s.Mem.Limit, avg10, avg60, avg300,
+		s.Mem.GraceTicks, total, delta, s.Mem.Integral)
 
 	return nil
+}
+
+func (r Reconciler) KondenseContainer(container corev1.Container) error {
+	s := r.Res[container.Name]
+
+	// conf.pressure = 10 * 1000 as default
+	if s.Mem.Integral > 10*1000 {
+		// Back off exponentially as we deviate from the target pressure.
+		diff := s.Mem.Integral / (10 * 1000)
+		// coeff_backoff = 20 as default
+		adj := math.Pow(float64(diff/20), 2)
+		// max_backoff = 1 as default
+		adj = min(adj*1, 1)
+
+		s.Mem.GraceTicks = s.Mem.Interval - 1
+		return r.Adjust(container.Name, adj)
+	}
+
+	// tighten the limit when grace ticks goes to 0.
+	if s.Mem.GraceTicks > 0 {
+		s.Mem.GraceTicks -= 1
+		return nil
+	}
+
+	// Tighten the limit.
+	diff := (10 * 1000) / max(s.Mem.Integral, 1)
+	// coeffProbe default to 10
+	adj := math.Pow(float64(diff/10), 2)
+	// max_probe default is 0.01
+	adj = min(adj*0.01, 0.01)
+
+	s.Mem.GraceTicks = s.Mem.Interval - 1
+
+	return r.Adjust(container.Name, -adj)
 }
 
 func (r Reconciler) Adjust(containerName string, factor float64) error {

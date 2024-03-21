@@ -40,7 +40,7 @@ func (r Reconciler) Reconcile() {
 		wg.Add(len(pod.Spec.Containers))
 
 		for _, container := range pod.Spec.Containers {
-			go r.KondenseContainer(pod, container, &wg)
+			go r.ReconcileContainer(pod, container, &wg)
 		}
 
 		wg.Wait()
