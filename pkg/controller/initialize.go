@@ -8,7 +8,7 @@ import (
 
 func (r Reconciler) InitializeRes(pod *corev1.Pod) {
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		exclude := containerToExclude(pod)
+		exclude := containersToExclude(pod)
 		if slices.Contains(exclude, containerStatus.Name) {
 			continue
 		}

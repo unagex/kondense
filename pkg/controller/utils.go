@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func containerToExclude(pod *corev1.Pod) []string {
+func containersToExclude(pod *corev1.Pod) []string {
 	exclude := []string{}
 	l, ok := pod.Annotations["unagex.com/kondense-exclude"]
 	if ok {

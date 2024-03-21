@@ -28,5 +28,15 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
+        - name: ubuntu-2
+          image: ubuntu
+          command: [ "sleep", "1d" ]
+          resources:
+            limits:
+              cpu: 100m
+              memory: 80Mi
+            requests:
+              cpu: 100m
+              memory: 80Mi
         - name: kondense
           image: ghcr.io/unagex/kondense:test

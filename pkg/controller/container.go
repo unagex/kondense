@@ -20,7 +20,7 @@ import (
 func (r Reconciler) KondenseContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	exclude := containerToExclude(pod)
+	exclude := containersToExclude(pod)
 	if slices.Contains(exclude, container.Name) {
 		return
 	}
