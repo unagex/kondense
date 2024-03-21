@@ -39,6 +39,10 @@ type Pressure struct {
 	Integral  int64
 	Current   int64
 
+	AVG10  float64
+	AVG60  float64
+	AVG300 float64
+
 	GraceTicks int
 	Interval   int
 }
@@ -139,6 +143,19 @@ func (r Reconciler) Reconcile() {
 			delta := memoryPressure - r.Res[container.Name].Memory.PrevTotal
 			r.Res[container.Name].Memory.PrevTotal = memoryPressure
 			r.Res[container.Name].Memory.Integral += delta
+
+			memoryPressureAVG10Tmp := strings.Split(string(memoryPressureOutput), " ")[1]
+			memoryPressureAVG10Tmp = strings.TrimPrefix(memoryPressureAVG10Tmp, "avg10=")
+			memoryPressureAVG10, err := strconv.ParseFloat(memoryPressureAVG10Tmp, 64)
+			if err != nil {
+				r.L.Println(err)
+				continue
+			}
+			r.Res[container.Name].Memory.AVG10 = memoryPressureAVG10
+
+			r.L.Printf("container=%s limit=%d memory_pressure_avg10=%f time_to_probe=%d total=%d delta=%d integral=%d",
+				container.Name, r.Res[container.Name].Memory.Limit, memoryPressureAVG10,
+				r.Res[container.Name].Memory.GraceTicks, memoryPressure, delta, r.Res[container.Name].Memory.Integral)
 
 			// conf.pressure = 10 * 1000 as default
 			if r.Res[container.Name].Memory.Integral > 10*1000 {
