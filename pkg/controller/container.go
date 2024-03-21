@@ -2,8 +2,6 @@ package controller
 
 import (
 	"bytes"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"math"
 	"net/http"
@@ -158,21 +156,4 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 	r.Res[containerName].Mem.Integral = 0
 
 	return nil
-}
-
-func getK8SClient() (*http.Client, error) {
-	caCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
-			},
-		},
-	}, nil
 }
