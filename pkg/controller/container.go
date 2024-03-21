@@ -82,9 +82,11 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 		return err
 	}
 
-	delta := total - r.Res[container.Name].Mem.PrevTotal
-	r.Res[container.Name].Mem.PrevTotal = total
-	r.Res[container.Name].Mem.Integral += delta
+	mem := r.Res[container.Name].Mem
+
+	delta := total - mem.PrevTotal
+	mem.PrevTotal = total
+	mem.Integral += delta
 
 	avg10Tmp := strings.Split(string(output), " ")[1]
 	avg10Tmp = strings.TrimPrefix(avg10Tmp, "avg10=")
@@ -92,7 +94,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	r.Res[container.Name].Mem.AVG10 = avg10
+	mem.AVG10 = avg10
 
 	avg60Tmp := strings.Split(string(output), " ")[2]
 	avg60Tmp = strings.TrimPrefix(avg60Tmp, "avg60=")
@@ -100,7 +102,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	r.Res[container.Name].Mem.AVG60 = avg60
+	mem.AVG60 = avg60
 
 	avg300Tmp := strings.Split(string(output), " ")[3]
 	avg300Tmp = strings.TrimPrefix(avg300Tmp, "avg300=")
@@ -108,11 +110,11 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	if err != nil {
 		return err
 	}
-	r.Res[container.Name].Mem.AVG300 = avg300
+	mem.AVG300 = avg300
 
 	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%f memory_pressure_avg60=%f memory_pressure_avg300=%f time_to_probe=%d total=%d delta=%d integral=%d",
-		container.Name, r.Res[container.Name].Mem.Limit, avg10, avg60, avg300,
-		r.Res[container.Name].Mem.GraceTicks, total, delta, r.Res[container.Name].Mem.Integral)
+		container.Name, mem.Limit, avg10, avg60, avg300,
+		mem.GraceTicks, total, delta, mem.Integral)
 
 	return nil
 }
