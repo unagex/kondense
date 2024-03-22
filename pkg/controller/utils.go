@@ -12,7 +12,7 @@ import (
 
 func containersToExclude(pod *corev1.Pod) []string {
 	exclude := []string{}
-	l, ok := pod.Annotations["unagex.com/kondense-exclude"]
+	l, ok := pod.Annotations["kondense/exclude"]
 	if ok {
 		exclude = strings.Split(l, ",")
 	}
