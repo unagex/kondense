@@ -113,8 +113,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	diff := s.Mem.TargetPressure / max(s.Mem.Integral, 1)
 	// coeffProbe default to 10
 	adj := math.Pow(float64(diff/10), 2)
-	// max_probe default is 0.01
-	adj = min(adj*0.01, 0.01)
+	adj = min(adj*s.Mem.MaxProbe, s.Mem.MaxProbe)
 
 	s.Mem.GraceTicks = s.Mem.Interval - 1
 

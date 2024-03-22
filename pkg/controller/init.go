@@ -37,12 +37,29 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 			}
 		}
 
+		maxProbe := DefaultMemMaxProbe
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-probe", containerStatus.Name)]; ok {
+			var err error
+			maxProbe, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				r.L.Printf("error cannot parse memory max probe in annotations for container: %s. Set memory max probe to default value: %.2f.",
+					containerStatus.Name, DefaultMemMaxProbe)
+				maxProbe = DefaultMemMaxProbe
+			}
+			if maxProbe <= 0 || maxProbe >= 1 {
+				r.L.Printf("error memory max probe in annotations should be between 0 and 1 exclusive for container: %s. Set memory max probe to default value: %.2f.",
+					containerStatus.Name, DefaultMemMaxProbe)
+				maxProbe = DefaultMemMaxProbe
+			}
+		}
+
 		if _, ok := r.CStats[containerStatus.Name]; !ok {
 			r.CStats[containerStatus.Name] = &Stats{
 				Mem: Memory{
 					GraceTicks:     interval,
 					Interval:       interval,
 					TargetPressure: targetPressure,
+					MaxProbe:       maxProbe,
 				}}
 		}
 
