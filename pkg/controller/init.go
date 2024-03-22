@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func (r Reconciler) InitCStats(pod *corev1.Pod) {
@@ -13,6 +14,40 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 		exclude := containersToExclude(pod)
 		if slices.Contains(exclude, containerStatus.Name) {
 			continue
+		}
+
+		min := DefaultMemMin
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-min", containerStatus.Name)]; ok {
+			minQ, err := resource.ParseQuantity(v)
+			minTmp := minQ.Value()
+			min = uint64(minTmp)
+			if err != nil {
+				r.L.Printf("error cannot parse memory minimum in annotations for container: %s. Set memory minimum to default value: %d bytes.",
+					containerStatus.Name, DefaultMemMin)
+				min = DefaultMemMin
+			}
+			if minTmp <= 0 {
+				r.L.Printf("error memory minimum in annotations should be bigger than 0 for container: %s. Set memory minimum to default value: %d bytes",
+					containerStatus.Name, DefaultMemMin)
+				min = DefaultMemMin
+			}
+		}
+
+		max := DefaultMemMax
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max", containerStatus.Name)]; ok {
+			maxQ, err := resource.ParseQuantity(v)
+			maxTmp := maxQ.Value()
+			max = uint64(maxTmp)
+			if err != nil {
+				r.L.Printf("error cannot parse memory maximum in annotations for container: %s. Set memory maximum to default value: %d bytes.",
+					containerStatus.Name, DefaultMemMax)
+				max = DefaultMemMax
+			}
+			if maxTmp <= 0 {
+				r.L.Printf("error memory maximum in annotations should be bigger than 0 for container: %s. Set memory maximum to default value: %d bytes",
+					containerStatus.Name, DefaultMemMax)
+				max = DefaultMemMax
+			}
 		}
 
 		interval := DefaultMemInterval
@@ -104,6 +139,8 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 		if _, ok := r.CStats[containerStatus.Name]; !ok {
 			r.CStats[containerStatus.Name] = &Stats{
 				Mem: Memory{
+					Min:            min,
+					Max:            max,
 					GraceTicks:     interval,
 					Interval:       interval,
 					TargetPressure: targetPressure,

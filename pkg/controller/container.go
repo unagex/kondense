@@ -125,7 +125,9 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
-	newMemory := int(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
+	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
+	newMemory = min(max(newMemory, r.CStats[containerName].Mem.Min), r.CStats[containerName].Mem.Max)
+
 	body := []byte(fmt.Sprintf(
 		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d"},"requests":{"memory": "%d"}}}]}}`,
 		containerName, newMemory, newMemory))

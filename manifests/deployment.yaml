@@ -13,6 +13,8 @@ spec:
         app: test-kondense
       annotations:
         unagex.com/kondense-exclude: "kondense"
+        unagex.com/kondense-ubuntu-memory-min: "20M"
+        unagex.com/kondense-ubuntu-memory-max: "200M"
         unagex.com/kondense-ubuntu-memory-interval: "1"
         unagex.com/kondense-ubuntu-memory-target-pressure: "10000"
         unagex.com/kondense-ubuntu-memory-max-probe: "0.01"

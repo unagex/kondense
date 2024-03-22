@@ -7,6 +7,11 @@ const (
 	DefaultMemMaxBackoff     float64 = 1
 	DefaultMemCoeffBackoff   float64 = 20
 	DefaultMemCoeffProbe     float64 = 10
+
+	// DefaultMemMin is 10M
+	DefaultMemMin uint64 = 10_000_000
+	// DefaultMemMax is 100G
+	DefaultMemMax uint64 = 100_000_000_000
 )
 
 type ContainerStats map[string]*Stats
@@ -27,6 +32,9 @@ type Memory struct {
 	MaxBackOff   float64
 	CoeffBackoff float64
 	CoeffProbe   float64
+
+	Min uint64
+	Max uint64
 
 	AVG10  float64
 	AVG60  float64
