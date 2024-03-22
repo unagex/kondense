@@ -14,6 +14,7 @@ spec:
       annotations:
         unagex.com/kondense-exclude: "kondense"
         unagex.com/kondense-ubuntu-memory-interval: "4"
+        unagex.com/kondense-ubuntu-memory-target-pressure: "1000"
     spec:
       serviceAccountName: kondense
       containers:

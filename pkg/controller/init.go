@@ -15,20 +15,35 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 			continue
 		}
 
-		interval := DefaultMemoryInterval
+		interval := DefaultMemInterval
 		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-interval", containerStatus.Name)]; ok {
 			var err error
 			interval, err = strconv.ParseUint(v, 10, 64)
 			if err != nil {
 				r.L.Printf("error cannot parse memory interval in annotations for container: %s. Set memory interval to default value: %d.",
-					containerStatus.Name, DefaultMemoryInterval)
-				interval = DefaultMemoryInterval
+					containerStatus.Name, DefaultMemInterval)
+				interval = DefaultMemInterval
+			}
+		}
+
+		targetPressure := DefaultMemTargetPressure
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-target-pressure", containerStatus.Name)]; ok {
+			var err error
+			targetPressure, err = strconv.ParseUint(v, 10, 64)
+			if err != nil {
+				r.L.Printf("error cannot parse memory target pressure in annotations for container: %s. Set memory target pressure to default value: %d.",
+					containerStatus.Name, DefaultMemTargetPressure)
+				targetPressure = DefaultMemTargetPressure
 			}
 		}
 
 		if _, ok := r.CStats[containerStatus.Name]; !ok {
 			r.CStats[containerStatus.Name] = &Stats{
-				Mem: Memory{GraceTicks: interval, Interval: interval}}
+				Mem: Memory{
+					GraceTicks:     interval,
+					Interval:       interval,
+					TargetPressure: targetPressure,
+				}}
 		}
 
 		limit := containerStatus.AllocatedResources.Memory().Value()

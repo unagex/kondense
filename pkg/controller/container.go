@@ -45,7 +45,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	totalTmp := strings.Split(string(output), " ")[4]
 	totalTmp = strings.TrimPrefix(totalTmp, "total=")
 	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
-	total, err := strconv.ParseInt(totalTmp, 10, 64)
+	total, err := strconv.ParseUint(totalTmp, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -91,10 +91,9 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	s := r.CStats[container.Name]
 
-	// conf.pressure = 10 * 1000 as default
-	if s.Mem.Integral > 10*1000 {
+	if s.Mem.Integral > s.Mem.TargetPressure {
 		// Back off exponentially as we deviate from the target pressure.
-		diff := s.Mem.Integral / (10 * 1000)
+		diff := s.Mem.Integral / s.Mem.TargetPressure
 		// coeff_backoff = 20 as default
 		adj := math.Pow(float64(diff/20), 2)
 		// max_backoff = 1 as default
@@ -111,7 +110,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	}
 
 	// Tighten the limit.
-	diff := (10 * 1000) / max(s.Mem.Integral, 1)
+	diff := s.Mem.TargetPressure / max(s.Mem.Integral, 1)
 	// coeffProbe default to 10
 	adj := math.Pow(float64(diff/10), 2)
 	// max_probe default is 0.01
