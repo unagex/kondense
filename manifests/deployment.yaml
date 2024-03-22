@@ -15,7 +15,8 @@ spec:
         unagex.com/kondense-exclude: "kondense"
         unagex.com/kondense-ubuntu-memory-interval: "4"
         unagex.com/kondense-ubuntu-memory-target-pressure: "1000"
-        unagex.com/kondense-ubuntu-memory-max-probe: "1.02"
+        unagex.com/kondense-ubuntu-memory-max-probe: "0.02"
+        unagex.com/kondense-ubuntu-memory-max-backoff: "2"
     spec:
       serviceAccountName: kondense
       containers:

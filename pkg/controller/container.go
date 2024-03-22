@@ -96,8 +96,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 		diff := s.Mem.Integral / s.Mem.TargetPressure
 		// coeff_backoff = 20 as default
 		adj := math.Pow(float64(diff/20), 2)
-		// max_backoff = 1 as default
-		adj = min(adj*1, 1)
+		adj = min(adj*s.Mem.MaxBackOff, s.Mem.MaxBackOff)
 
 		s.Mem.GraceTicks = s.Mem.Interval - 1
 		return r.Adjust(container.Name, adj)

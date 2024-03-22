@@ -53,6 +53,22 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 			}
 		}
 
+		maxBackoff := DefaultMemMaxBackoff
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-backoff", containerStatus.Name)]; ok {
+			var err error
+			maxBackoff, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				r.L.Printf("error cannot parse memory max backoff in annotations for container: %s. Set memory max backoff to default value: %.2f.",
+					containerStatus.Name, DefaultMemMaxProbe)
+				maxBackoff = DefaultMemMaxBackoff
+			}
+			if maxProbe <= 0 {
+				r.L.Printf("error memory max backoff in annotations should be bigger than 0 for container: %s. Set memory max backoff to default value: %.2f.",
+					containerStatus.Name, DefaultMemMaxProbe)
+				maxBackoff = DefaultMemMaxBackoff
+			}
+		}
+
 		if _, ok := r.CStats[containerStatus.Name]; !ok {
 			r.CStats[containerStatus.Name] = &Stats{
 				Mem: Memory{
@@ -60,6 +76,7 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 					Interval:       interval,
 					TargetPressure: targetPressure,
 					MaxProbe:       maxProbe,
+					MaxBackOff:     maxBackoff,
 				}}
 		}
 
