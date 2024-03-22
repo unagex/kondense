@@ -16,142 +16,166 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 			continue
 		}
 
-		min := DefaultMemMin
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-min", containerStatus.Name)]; ok {
-			minQ, err := resource.ParseQuantity(v)
-			minTmp := minQ.Value()
-			min = uint64(minTmp)
-			if err != nil {
-				r.L.Printf("error cannot parse memory minimum in annotations for container: %s. Set memory minimum to default value: %d bytes.",
-					containerStatus.Name, DefaultMemMin)
-				min = DefaultMemMin
-			}
-			if minTmp <= 0 {
-				r.L.Printf("error memory minimum in annotations should be bigger than 0 for container: %s. Set memory minimum to default value: %d bytes",
-					containerStatus.Name, DefaultMemMin)
-				min = DefaultMemMin
-			}
-		}
-
-		max := DefaultMemMax
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max", containerStatus.Name)]; ok {
-			maxQ, err := resource.ParseQuantity(v)
-			maxTmp := maxQ.Value()
-			max = uint64(maxTmp)
-			if err != nil {
-				r.L.Printf("error cannot parse memory maximum in annotations for container: %s. Set memory maximum to default value: %d bytes.",
-					containerStatus.Name, DefaultMemMax)
-				max = DefaultMemMax
-			}
-			if maxTmp <= 0 {
-				r.L.Printf("error memory maximum in annotations should be bigger than 0 for container: %s. Set memory maximum to default value: %d bytes",
-					containerStatus.Name, DefaultMemMax)
-				max = DefaultMemMax
-			}
-		}
-
-		interval := DefaultMemInterval
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-interval", containerStatus.Name)]; ok {
-			var err error
-			interval, err = strconv.ParseUint(v, 10, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory interval in annotations for container: %s. Set memory interval to default value: %d.",
-					containerStatus.Name, DefaultMemInterval)
-				interval = DefaultMemInterval
-			}
-		}
-
-		targetPressure := DefaultMemTargetPressure
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-target-pressure", containerStatus.Name)]; ok {
-			var err error
-			targetPressure, err = strconv.ParseUint(v, 10, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory target pressure in annotations for container: %s. Set memory target pressure to default value: %d.",
-					containerStatus.Name, DefaultMemTargetPressure)
-				targetPressure = DefaultMemTargetPressure
-			}
-		}
-
-		maxProbe := DefaultMemMaxProbe
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-probe", containerStatus.Name)]; ok {
-			var err error
-			maxProbe, err = strconv.ParseFloat(v, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory max probe in annotations for container: %s. Set memory max probe to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxProbe)
-				maxProbe = DefaultMemMaxProbe
-			}
-			if maxProbe <= 0 || maxProbe >= 1 {
-				r.L.Printf("error memory max probe in annotations should be between 0 and 1 exclusive for container: %s. Set memory max probe to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxProbe)
-				maxProbe = DefaultMemMaxProbe
-			}
-		}
-
-		maxBackoff := DefaultMemMaxBackoff
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-backoff", containerStatus.Name)]; ok {
-			var err error
-			maxBackoff, err = strconv.ParseFloat(v, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory max backoff in annotations for container: %s. Set memory max backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxBackoff)
-				maxBackoff = DefaultMemMaxBackoff
-			}
-			if maxBackoff <= 0 {
-				r.L.Printf("error memory max backoff in annotations should be bigger than 0 for container: %s. Set memory max backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxBackoff)
-				maxBackoff = DefaultMemMaxBackoff
-			}
-		}
-
-		coeffProbe := DefaultMemCoeffProbe
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-probe", containerStatus.Name)]; ok {
-			var err error
-			coeffProbe, err = strconv.ParseFloat(v, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory coeff probe in annotations for container: %s. Set memory coeff probe to default value: %.2f.",
-					containerStatus.Name, DefaultMemCoeffProbe)
-				coeffProbe = DefaultMemCoeffProbe
-			}
-			if coeffProbe <= 0 {
-				r.L.Printf("error memory coeff probe in annotations should be bigger than 0 for container: %s. Set memory coeff probe to default value: %.2f.",
-					containerStatus.Name, DefaultMemCoeffProbe)
-				coeffProbe = DefaultMemCoeffProbe
-			}
-		}
-
-		coeffBackoff := DefaultMemCoeffBackoff
-		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-backoff", containerStatus.Name)]; ok {
-			var err error
-			coeffBackoff, err = strconv.ParseFloat(v, 64)
-			if err != nil {
-				r.L.Printf("error cannot parse memory coeff backoff in annotations for container: %s. Set memory coeff backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemCoeffBackoff)
-				coeffBackoff = DefaultMemCoeffBackoff
-			}
-			if maxBackoff <= 0 {
-				r.L.Printf("error memory coeff backoff in annotations should be bigger than 0 for container: %s. Set memory coeff backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemCoeffBackoff)
-				coeffBackoff = DefaultMemCoeffBackoff
-			}
-		}
-
 		if _, ok := r.CStats[containerStatus.Name]; !ok {
 			r.CStats[containerStatus.Name] = &Stats{
 				Mem: Memory{
-					Min:            min,
-					Max:            max,
-					GraceTicks:     interval,
-					Interval:       interval,
-					TargetPressure: targetPressure,
-					MaxProbe:       maxProbe,
-					MaxBackOff:     maxBackoff,
-					CoeffBackoff:   coeffBackoff,
-					CoeffProbe:     coeffProbe,
+					Min:            r.getMemoryMin(pod, containerStatus.Name),
+					Max:            r.getMemoryMax(pod, containerStatus.Name),
+					GraceTicks:     r.getMemoryInterval(pod, containerStatus.Name),
+					Interval:       r.getMemoryInterval(pod, containerStatus.Name),
+					TargetPressure: r.getMemoryTargetPressure(pod, containerStatus.Name),
+					MaxProbe:       r.getMemoryMaxProbe(pod, containerStatus.Name),
+					MaxBackOff:     r.getMemoryMaxBackoff(pod, containerStatus.Name),
+					CoeffProbe:     r.getMemoryCoeffProbe(pod, containerStatus.Name),
+					CoeffBackoff:   r.getMemoryCoeffBackoff(pod, containerStatus.Name),
 				}}
 		}
 
 		limit := containerStatus.AllocatedResources.Memory().Value()
 		r.CStats[containerStatus.Name].Mem.Limit = limit
 	}
+}
+
+func (r Reconciler) getMemoryMin(pod *corev1.Pod, containerName string) uint64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-min", containerName)]; ok {
+		minQ, err := resource.ParseQuantity(v)
+		if err != nil {
+			r.L.Printf("error cannot parse memory minimum in annotations for container: %s. Set memory minimum to default value: %d bytes.",
+				containerName, DefaultMemMin)
+			return DefaultMemMin
+		}
+		min := minQ.Value()
+		if min <= 0 {
+			r.L.Printf("error memory minimum in annotations should be bigger than 0 for container: %s. Set memory minimum to default value: %d bytes",
+				containerName, DefaultMemMin)
+			return DefaultMemMin
+		}
+		return uint64(min)
+	}
+
+	return DefaultMemMin
+}
+
+func (r Reconciler) getMemoryMax(pod *corev1.Pod, containerName string) uint64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max", containerName)]; ok {
+		maxQ, err := resource.ParseQuantity(v)
+		if err != nil {
+			r.L.Printf("error cannot parse memory maximum in annotations for container: %s. Set memory maximum to default value: %d bytes.",
+				containerName, DefaultMemMax)
+			return DefaultMemMax
+		}
+		max := maxQ.Value()
+		if max <= 0 {
+			r.L.Printf("error memory maximum in annotations should be bigger than 0 for container: %s. Set memory maximum to default value: %d bytes",
+				containerName, DefaultMemMax)
+			return DefaultMemMax
+		}
+		return uint64(max)
+	}
+
+	return DefaultMemMax
+}
+
+func (r Reconciler) getMemoryInterval(pod *corev1.Pod, containerName string) uint64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-interval", containerName)]; ok {
+		interval, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory interval in annotations for container: %s. Set memory interval to default value: %d.",
+				containerName, DefaultMemInterval)
+			return DefaultMemInterval
+		}
+		return interval
+	}
+
+	return DefaultMemInterval
+}
+
+func (r Reconciler) getMemoryTargetPressure(pod *corev1.Pod, containerName string) uint64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-target-pressure", containerName)]; ok {
+		targetPressure, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory target pressure in annotations for container: %s. Set memory target pressure to default value: %d.",
+				containerName, DefaultMemTargetPressure)
+			return DefaultMemTargetPressure
+		}
+		return targetPressure
+	}
+
+	return DefaultMemTargetPressure
+}
+
+func (r Reconciler) getMemoryMaxProbe(pod *corev1.Pod, containerName string) float64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-probe", containerName)]; ok {
+		maxProbe, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory max probe in annotations for container: %s. Set memory max probe to default value: %.2f.",
+				containerName, DefaultMemMaxProbe)
+			return DefaultMemMaxProbe
+		}
+		if maxProbe <= 0 || maxProbe >= 1 {
+			r.L.Printf("error memory max probe in annotations should be between 0 and 1 exclusive for container: %s. Set memory max probe to default value: %.2f.",
+				containerName, DefaultMemMaxProbe)
+			return DefaultMemMaxProbe
+		}
+		return maxProbe
+	}
+
+	return DefaultMemMaxProbe
+}
+
+func (r Reconciler) getMemoryMaxBackoff(pod *corev1.Pod, containerName string) float64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-max-backoff", containerName)]; ok {
+		maxBackoff, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory max backoff in annotations for container: %s. Set memory max backoff to default value: %.2f.",
+				containerName, DefaultMemMaxBackoff)
+			return DefaultMemMaxBackoff
+		}
+		if maxBackoff <= 0 {
+			r.L.Printf("error memory max backoff in annotations should be bigger than 0 for container: %s. Set memory max backoff to default value: %.2f.",
+				containerName, DefaultMemMaxBackoff)
+			return DefaultMemMaxBackoff
+		}
+		return maxBackoff
+	}
+
+	return DefaultMemMaxBackoff
+}
+
+func (r Reconciler) getMemoryCoeffProbe(pod *corev1.Pod, containerName string) float64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-probe", containerName)]; ok {
+		coeffProbe, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory coeff probe in annotations for container: %s. Set memory coeff probe to default value: %.2f.",
+				containerName, DefaultMemCoeffProbe)
+			return DefaultMemCoeffProbe
+		}
+		if coeffProbe <= 0 {
+			r.L.Printf("error memory coeff probe in annotations should be bigger than 0 for container: %s. Set memory coeff probe to default value: %.2f.",
+				containerName, DefaultMemCoeffProbe)
+			return DefaultMemCoeffProbe
+		}
+		return coeffProbe
+	}
+
+	return DefaultMemCoeffProbe
+}
+
+func (r Reconciler) getMemoryCoeffBackoff(pod *corev1.Pod, containerName string) float64 {
+	if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-backoff", containerName)]; ok {
+		coeffBackoff, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse memory coeff backoff in annotations for container: %s. Set memory coeff backoff to default value: %.2f.",
+				containerName, DefaultMemCoeffBackoff)
+			return DefaultMemCoeffBackoff
+		}
+		if coeffBackoff <= 0 {
+			r.L.Printf("error memory coeff backoff in annotations should be bigger than 0 for container: %s. Set memory coeff backoff to default value: %.2f.",
+				containerName, DefaultMemCoeffBackoff)
+			return DefaultMemCoeffBackoff
+		}
+		return coeffBackoff
+	}
+
+	return DefaultMemCoeffBackoff
 }
