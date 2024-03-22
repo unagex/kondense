@@ -1,5 +1,9 @@
 package controller
 
+const (
+	DefaultMemoryInterval uint64 = 2
+)
+
 type ContainerStats map[string]*Stats
 
 type Stats struct {
@@ -16,6 +20,6 @@ type Memory struct {
 	AVG60  float64
 	AVG300 float64
 
-	GraceTicks int
-	Interval   int
+	GraceTicks uint64
+	Interval   uint64
 }

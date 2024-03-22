@@ -34,7 +34,7 @@ func (r Reconciler) Reconcile() {
 			continue
 		}
 
-		r.InitializeRes(pod)
+		r.InitCStats(pod)
 
 		var wg sync.WaitGroup
 		wg.Add(len(pod.Spec.Containers))

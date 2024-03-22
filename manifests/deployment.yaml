@@ -7,14 +7,13 @@ spec:
     matchLabels:
       app: test-kondense
   replicas: 1
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
         app: test-kondense
       annotations:
         unagex.com/kondense-exclude: "kondense"
+        unagex.com/kondense-ubuntu-memory-interval: "4"
     spec:
       serviceAccountName: kondense
       containers:
