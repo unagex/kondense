@@ -5,6 +5,8 @@ const (
 	DefaultMemTargetPressure uint64  = 10_000
 	DefaultMemMaxProbe       float64 = 0.01
 	DefaultMemMaxBackoff     float64 = 1
+	DefaultMemCoeffBackoff   float64 = 20
+	DefaultMemCoeffProbe     float64 = 10
 )
 
 type ContainerStats map[string]*Stats
@@ -21,8 +23,10 @@ type Memory struct {
 
 	TargetPressure uint64
 
-	MaxProbe   float64
-	MaxBackOff float64
+	MaxProbe     float64
+	MaxBackOff   float64
+	CoeffBackoff float64
+	CoeffProbe   float64
 
 	AVG10  float64
 	AVG60  float64

@@ -13,10 +13,12 @@ spec:
         app: test-kondense
       annotations:
         unagex.com/kondense-exclude: "kondense"
-        unagex.com/kondense-ubuntu-memory-interval: "4"
-        unagex.com/kondense-ubuntu-memory-target-pressure: "1000"
-        unagex.com/kondense-ubuntu-memory-max-probe: "0.02"
-        unagex.com/kondense-ubuntu-memory-max-backoff: "2"
+        unagex.com/kondense-ubuntu-memory-interval: "1"
+        unagex.com/kondense-ubuntu-memory-target-pressure: "10000"
+        unagex.com/kondense-ubuntu-memory-max-probe: "0.01"
+        unagex.com/kondense-ubuntu-memory-max-backoff: "1"
+        unagex.com/kondense-ubuntu-memory-coeff-backoff: "20"
+        unagex.com/kondense-ubuntu-memory-coeff-probe: "10"
     spec:
       serviceAccountName: kondense
       containers:
@@ -30,15 +32,15 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
-        - name: ubuntu-2
-          image: ubuntu
-          command: [ "sleep", "1d" ]
-          resources:
-            limits:
-              cpu: 100m
-              memory: 80Mi
-            requests:
-              cpu: 100m
-              memory: 80Mi
+        # - name: ubuntu-2
+        #   image: ubuntu
+        #   command: [ "sleep", "1d" ]
+        #   resources:
+        #     limits:
+        #       cpu: 100m
+        #       memory: 80Mi
+        #     requests:
+        #       cpu: 100m
+        #       memory: 80Mi
         - name: kondense
           image: ghcr.io/unagex/kondense:test

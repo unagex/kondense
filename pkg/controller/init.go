@@ -59,13 +59,45 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 			maxBackoff, err = strconv.ParseFloat(v, 64)
 			if err != nil {
 				r.L.Printf("error cannot parse memory max backoff in annotations for container: %s. Set memory max backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxProbe)
+					containerStatus.Name, DefaultMemMaxBackoff)
 				maxBackoff = DefaultMemMaxBackoff
 			}
-			if maxProbe <= 0 {
+			if maxBackoff <= 0 {
 				r.L.Printf("error memory max backoff in annotations should be bigger than 0 for container: %s. Set memory max backoff to default value: %.2f.",
-					containerStatus.Name, DefaultMemMaxProbe)
+					containerStatus.Name, DefaultMemMaxBackoff)
 				maxBackoff = DefaultMemMaxBackoff
+			}
+		}
+
+		coeffProbe := DefaultMemCoeffProbe
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-probe", containerStatus.Name)]; ok {
+			var err error
+			coeffProbe, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				r.L.Printf("error cannot parse memory coeff probe in annotations for container: %s. Set memory coeff probe to default value: %.2f.",
+					containerStatus.Name, DefaultMemCoeffProbe)
+				coeffProbe = DefaultMemCoeffProbe
+			}
+			if coeffProbe <= 0 {
+				r.L.Printf("error memory coeff probe in annotations should be bigger than 0 for container: %s. Set memory coeff probe to default value: %.2f.",
+					containerStatus.Name, DefaultMemCoeffProbe)
+				coeffProbe = DefaultMemCoeffProbe
+			}
+		}
+
+		coeffBackoff := DefaultMemCoeffBackoff
+		if v, ok := pod.Annotations[fmt.Sprintf("unagex.com/kondense-%s-memory-coeff-backoff", containerStatus.Name)]; ok {
+			var err error
+			coeffBackoff, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				r.L.Printf("error cannot parse memory coeff backoff in annotations for container: %s. Set memory coeff backoff to default value: %.2f.",
+					containerStatus.Name, DefaultMemCoeffBackoff)
+				coeffBackoff = DefaultMemCoeffBackoff
+			}
+			if maxBackoff <= 0 {
+				r.L.Printf("error memory coeff backoff in annotations should be bigger than 0 for container: %s. Set memory coeff backoff to default value: %.2f.",
+					containerStatus.Name, DefaultMemCoeffBackoff)
+				coeffBackoff = DefaultMemCoeffBackoff
 			}
 		}
 
@@ -77,6 +109,8 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 					TargetPressure: targetPressure,
 					MaxProbe:       maxProbe,
 					MaxBackOff:     maxBackoff,
+					CoeffBackoff:   coeffBackoff,
+					CoeffProbe:     coeffProbe,
 				}}
 		}
 

@@ -94,8 +94,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	if s.Mem.Integral > s.Mem.TargetPressure {
 		// Back off exponentially as we deviate from the target pressure.
 		diff := s.Mem.Integral / s.Mem.TargetPressure
-		// coeff_backoff = 20 as default
-		adj := math.Pow(float64(diff/20), 2)
+		adj := math.Pow(float64(diff)/DefaultMemCoeffBackoff, 2)
 		adj = min(adj*s.Mem.MaxBackOff, s.Mem.MaxBackOff)
 
 		s.Mem.GraceTicks = s.Mem.Interval - 1
@@ -110,8 +109,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 
 	// Tighten the limit.
 	diff := s.Mem.TargetPressure / max(s.Mem.Integral, 1)
-	// coeffProbe default to 10
-	adj := math.Pow(float64(diff/10), 2)
+	adj := math.Pow(float64(diff)/s.Mem.CoeffProbe, 2)
 	adj = min(adj*s.Mem.MaxProbe, s.Mem.MaxProbe)
 
 	s.Mem.GraceTicks = s.Mem.Interval - 1
