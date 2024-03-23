@@ -80,7 +80,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	}
 	s.Mem.AVG300 = avg300
 
-	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_probe=%d total=%d delta=%d integral=%d",
+	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_dec=%d total=%d delta=%d integral=%d",
 		container.Name, s.Mem.Limit,
 		avg10, avg60, avg300,
 		s.Mem.GraceTicks, total, delta, s.Mem.Integral)
@@ -92,10 +92,10 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	s := r.CStats[container.Name]
 
 	if s.Mem.Integral > s.Mem.TargetPressure {
-		// Back off exponentially as we deviate from the target pressure.
+		// Increase exponentially as we deviate from the target pressure.
 		diff := s.Mem.Integral / s.Mem.TargetPressure
-		adj := math.Pow(float64(diff)/DefaultMemCoeffBackoff, 2)
-		adj = min(adj*s.Mem.MaxBackOff, s.Mem.MaxBackOff)
+		adj := math.Pow(float64(diff)/DefaultMemCoeffInc, 2)
+		adj = min(adj*s.Mem.MaxInc, s.Mem.MaxInc)
 
 		s.Mem.GraceTicks = s.Mem.Interval - 1
 		return r.Adjust(container.Name, adj)
@@ -109,8 +109,8 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 
 	// Tighten the limit.
 	diff := s.Mem.TargetPressure / max(s.Mem.Integral, 1)
-	adj := math.Pow(float64(diff)/s.Mem.CoeffProbe, 2)
-	adj = min(adj*s.Mem.MaxProbe, s.Mem.MaxProbe)
+	adj := math.Pow(float64(diff)/s.Mem.CoeffDec, 2)
+	adj = min(adj*s.Mem.MaxDec, s.Mem.MaxDec)
 
 	s.Mem.GraceTicks = s.Mem.Interval - 1
 

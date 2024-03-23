@@ -3,10 +3,10 @@ package controller
 const (
 	DefaultMemInterval       uint64  = 2
 	DefaultMemTargetPressure uint64  = 10_000
-	DefaultMemMaxProbe       float64 = 0.01
-	DefaultMemMaxBackoff     float64 = 1
-	DefaultMemCoeffBackoff   float64 = 20
-	DefaultMemCoeffProbe     float64 = 10
+	DefaultMemMaxInc         float64 = 1
+	DefaultMemMaxDec         float64 = 0.01
+	DefaultMemCoeffInc       float64 = 20
+	DefaultMemCoeffDec       float64 = 10
 
 	// DefaultMemMin is 10M
 	DefaultMemMin uint64 = 10_000_000
@@ -28,10 +28,10 @@ type Memory struct {
 
 	TargetPressure uint64
 
-	MaxProbe     float64
-	MaxBackOff   float64
-	CoeffBackoff float64
-	CoeffProbe   float64
+	MaxInc   float64
+	MaxDec   float64
+	CoeffInc float64
+	CoeffDec float64
 
 	Min uint64
 	Max uint64

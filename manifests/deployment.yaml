@@ -17,10 +17,10 @@ spec:
         kondense-ubuntu-memoryMax: "200M"
         kondense-ubuntu-memoryInterval: "1"
         kondense-ubuntu-memoryTargetPressure: "10000"
-        kondense-ubuntu-memoryMaxProbe: "0.01"
-        kondense-ubuntu-memoryCoeffProbe: "10"
-        kondense-ubuntu-memoryMaxBackoff: "1"
-        kondense-ubuntu-memoryCoeffBackoff: "20"
+        kondense-ubuntu-memoryMaxInc: "1"
+        kondense-ubuntu-memoryMaxDec: "0.03"
+        kondense-ubuntu-memoryCoeffInc: "20"
+        kondense-ubuntu-memoryCoeffDec: "10"
     spec:
       serviceAccountName: kondense
       containers:
