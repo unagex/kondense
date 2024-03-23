@@ -12,15 +12,15 @@ spec:
       labels:
         app: test-kondense
       annotations:
-        kondense/exclude: "kondense"
-        kondense/ubuntu/memory-min: "20M"
-        kondense/ubuntu/memory-max: "200M"
-        kondense/ubuntu/memory-interval: "1"
-        kondense/ubuntu/memory-target-pressure: "10000"
-        kondense/ubuntu/memory-max-probe: "0.01"
-        kondense/ubuntu/memory-max-backoff: "1"
-        kondense/ubuntu/memory-coeff-backoff: "20"
-        kondense/ubuntu/memory-coeff-probe: "10"
+        kondense-exclude: "kondense"
+        kondense-ubuntu-memoryMin: "20M"
+        kondense-ubuntu-memoryMax: "200M"
+        kondense-ubuntu-memoryInterval: "1"
+        kondense-ubuntu-memoryTargetPressure: "10000"
+        kondense-ubuntu-memoryMaxProbe: "0.01"
+        kondense-ubuntu-memoryCoeffProbe: "10"
+        kondense-ubuntu-memoryMaxBackoff: "1"
+        kondense-ubuntu-memoryCoeffBackoff: "20"
     spec:
       serviceAccountName: kondense
       containers:

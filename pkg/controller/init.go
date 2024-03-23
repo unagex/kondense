@@ -37,7 +37,7 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 }
 
 func (r Reconciler) getMemoryMin(pod *corev1.Pod, containerName string) uint64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-min", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memory-min", containerName)]; ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
 			r.L.Printf("error cannot parse memory minimum in annotations for container: %s. Set memory minimum to default value: %d bytes.",
@@ -57,7 +57,7 @@ func (r Reconciler) getMemoryMin(pod *corev1.Pod, containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryMax(pod *corev1.Pod, containerName string) uint64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-max", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryMax", containerName)]; ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
 			r.L.Printf("error cannot parse memory maximum in annotations for container: %s. Set memory maximum to default value: %d bytes.",
@@ -77,7 +77,7 @@ func (r Reconciler) getMemoryMax(pod *corev1.Pod, containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryInterval(pod *corev1.Pod, containerName string) uint64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-interval", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryInterval", containerName)]; ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory interval in annotations for container: %s. Set memory interval to default value: %d.",
@@ -91,7 +91,7 @@ func (r Reconciler) getMemoryInterval(pod *corev1.Pod, containerName string) uin
 }
 
 func (r Reconciler) getMemoryTargetPressure(pod *corev1.Pod, containerName string) uint64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-target-pressure", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryTargetPressure", containerName)]; ok {
 		targetPressure, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory target pressure in annotations for container: %s. Set memory target pressure to default value: %d.",
@@ -105,7 +105,7 @@ func (r Reconciler) getMemoryTargetPressure(pod *corev1.Pod, containerName strin
 }
 
 func (r Reconciler) getMemoryMaxProbe(pod *corev1.Pod, containerName string) float64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-max-probe", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryMaxProbe", containerName)]; ok {
 		maxProbe, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory max probe in annotations for container: %s. Set memory max probe to default value: %.2f.",
@@ -124,7 +124,7 @@ func (r Reconciler) getMemoryMaxProbe(pod *corev1.Pod, containerName string) flo
 }
 
 func (r Reconciler) getMemoryMaxBackoff(pod *corev1.Pod, containerName string) float64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-max-backoff", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryMaxBackoff", containerName)]; ok {
 		maxBackoff, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory max backoff in annotations for container: %s. Set memory max backoff to default value: %.2f.",
@@ -143,7 +143,7 @@ func (r Reconciler) getMemoryMaxBackoff(pod *corev1.Pod, containerName string) f
 }
 
 func (r Reconciler) getMemoryCoeffProbe(pod *corev1.Pod, containerName string) float64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-coeff-probe", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryCoeffProbe", containerName)]; ok {
 		coeffProbe, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory coeff probe in annotations for container: %s. Set memory coeff probe to default value: %.2f.",
@@ -162,7 +162,7 @@ func (r Reconciler) getMemoryCoeffProbe(pod *corev1.Pod, containerName string) f
 }
 
 func (r Reconciler) getMemoryCoeffBackoff(pod *corev1.Pod, containerName string) float64 {
-	if v, ok := pod.Annotations[fmt.Sprintf("kondense/%s/memory-coeff-backoff", containerName)]; ok {
+	if v, ok := pod.Annotations[fmt.Sprintf("kondense-%s-memoryCoeffBackoff", containerName)]; ok {
 		coeffBackoff, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse memory coeff backoff in annotations for container: %s. Set memory coeff backoff to default value: %.2f.",
