@@ -33,6 +33,10 @@ func (r Reconciler) Reconcile() {
 			r.L.Println(err)
 			continue
 		}
+		if pod.Status.QOSClass != corev1.PodQOSGuaranteed {
+			r.L.Printf("error kondense is only allowed for pods with a QoS class of Guaranteed, got: %s.", pod.Status.QOSClass)
+			continue
+		}
 
 		r.InitCStats(pod)
 

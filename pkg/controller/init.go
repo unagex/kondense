@@ -98,6 +98,11 @@ func (r Reconciler) getMemoryTargetPressure(pod *corev1.Pod, containerName strin
 				containerName, DefaultMemTargetPressure)
 			return DefaultMemTargetPressure
 		}
+		if targetPressure == 0 {
+			r.L.Printf("error memory target pressure in annotations should be more than 0 for container: %s. Set memory target pressure to default value: %d.",
+				containerName, DefaultMemTargetPressure)
+			return DefaultMemTargetPressure
+		}
 		return targetPressure
 	}
 
