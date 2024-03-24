@@ -6,13 +6,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
-func containersToExclude(pod *corev1.Pod) []string {
+func containersToExclude() []string {
 	exclude := []string{}
-	l, ok := pod.Annotations["kondense-exclude"]
+	l, ok := os.LookupEnv("EXCLUDE")
 	if ok {
 		exclude = strings.Split(l, ",")
 	}

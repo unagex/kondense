@@ -18,7 +18,7 @@ import (
 func (r Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	exclude := containersToExclude(pod)
+	exclude := containersToExclude()
 	if slices.Contains(exclude, container.Name) {
 		return
 	}
