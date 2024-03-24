@@ -42,8 +42,12 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 		return err
 	}
 
-	totalTmp := strings.Split(string(output), " ")[4]
-	totalTmp = strings.TrimPrefix(totalTmp, "total=")
+	some := strings.Split(string(output), " ")
+	if len(some) != 9 {
+		return fmt.Errorf("error got unexpected memory.pressure for container %s: %s", container.Name, output)
+	}
+
+	totalTmp := strings.TrimPrefix(some[4], "total=")
 	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
 	total, err := strconv.ParseUint(totalTmp, 10, 64)
 	if err != nil {
@@ -56,24 +60,21 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	s.Mem.PrevTotal = total
 	s.Mem.Integral += delta
 
-	avg10Tmp := strings.Split(string(output), " ")[1]
-	avg10Tmp = strings.TrimPrefix(avg10Tmp, "avg10=")
+	avg10Tmp := strings.TrimPrefix(some[1], "avg10=")
 	avg10, err := strconv.ParseFloat(avg10Tmp, 64)
 	if err != nil {
 		return err
 	}
 	s.Mem.AVG10 = avg10
 
-	avg60Tmp := strings.Split(string(output), " ")[2]
-	avg60Tmp = strings.TrimPrefix(avg60Tmp, "avg60=")
+	avg60Tmp := strings.TrimPrefix(some[2], "avg60=")
 	avg60, err := strconv.ParseFloat(avg60Tmp, 64)
 	if err != nil {
 		return err
 	}
 	s.Mem.AVG60 = avg60
 
-	avg300Tmp := strings.Split(string(output), " ")[3]
-	avg300Tmp = strings.TrimPrefix(avg300Tmp, "avg300=")
+	avg300Tmp := strings.TrimPrefix(some[3], "avg300=")
 	avg300, err := strconv.ParseFloat(avg300Tmp, 64)
 	if err != nil {
 		return err
@@ -107,7 +108,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 		return nil
 	}
 
-	// Tighten the limit.
+	// tighten the limit.
 	diff := s.Mem.TargetPressure / max(s.Mem.Integral, 1)
 	adj := math.Pow(float64(diff)/s.Mem.CoeffDec, 2)
 	adj = min(adj*s.Mem.MaxDec, s.Mem.MaxDec)
@@ -144,7 +145,6 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 	req.Header.Add("Authorization", bearer)
 	req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 
-	// TODO: check that we receive 200 response
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
 			http.StatusOK, resp.StatusCode)
 	}
-	r.L.Printf("patched container %s with factor: %f and new memory: %d", containerName, factor, newMemory)
+	r.L.Printf("patched container %s with factor: %.2f and new memory: %d bytes.", containerName, factor, newMemory)
 
 	r.CStats[containerName].Mem.Integral = 0
 
