@@ -39,17 +39,18 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 }
 
 func (r Reconciler) getMemoryMin(containerName string) uint64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_MIN", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_MIN", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse memory minimum in annotations for container: %s. Set memory minimum to default value: %d bytes.",
-				containerName, DefaultMemMin)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d bytes.",
+				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
 		min := minQ.Value()
 		if min <= 0 {
-			r.L.Printf("error memory minimum in annotations should be bigger than 0 for container: %s. Set memory minimum to default value: %d bytes",
-				containerName, DefaultMemMin)
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d bytes",
+				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
 		return uint64(min)
@@ -59,17 +60,18 @@ func (r Reconciler) getMemoryMin(containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryMax(containerName string) uint64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_MAX", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_MAX", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse memory maximum in annotations for container: %s. Set memory maximum to default value: %d bytes.",
-				containerName, DefaultMemMax)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d bytes.",
+				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}
 		max := maxQ.Value()
 		if max <= 0 {
-			r.L.Printf("error memory maximum in annotations should be bigger than 0 for container: %s. Set memory maximum to default value: %d bytes",
-				containerName, DefaultMemMax)
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d bytes",
+				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}
 		return uint64(max)
@@ -79,11 +81,12 @@ func (r Reconciler) getMemoryMax(containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryInterval(containerName string) uint64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_INTERVAL", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_INTERVAL", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memory interval in annotations for container: %s. Set memory interval to default value: %d.",
-				containerName, DefaultMemInterval)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d.",
+				env, env, DefaultMemInterval)
 			return DefaultMemInterval
 		}
 		return interval
@@ -93,16 +96,17 @@ func (r Reconciler) getMemoryInterval(containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryTargetPressure(containerName string) uint64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_TARGET_PRESSURE", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_TARGET_PRESSURE", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		targetPressure, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memory target pressure in annotations for container: %s. Set memory target pressure to default value: %d.",
-				containerName, DefaultMemTargetPressure)
+			r.L.Printf("error cannot parse environment variable: %s pressure. Set %s to default value: %d.",
+				env, env, DefaultMemTargetPressure)
 			return DefaultMemTargetPressure
 		}
 		if targetPressure == 0 {
-			r.L.Printf("error memory target pressure in annotations should be more than 0 for container: %s. Set memory target pressure to default value: %d.",
-				containerName, DefaultMemTargetPressure)
+			r.L.Printf("error environment variable: %s should be more than 0. Set %s to default value: %d.",
+				env, env, DefaultMemTargetPressure)
 			return DefaultMemTargetPressure
 		}
 		return targetPressure
@@ -112,16 +116,17 @@ func (r Reconciler) getMemoryTargetPressure(containerName string) uint64 {
 }
 
 func (r Reconciler) getMemoryMaxDec(containerName string) float64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_MAX_DEC", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_MAX_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		maxDec, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memoryMaxDec in annotations for container: %s. Set memoryMaxDec to default value: %.2f.",
-				containerName, DefaultMemMaxDec)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxDec)
 			return DefaultMemMaxDec
 		}
 		if maxDec <= 0 || maxDec >= 1 {
-			r.L.Printf("error memoryMaxDec in annotations should be between 0 and 1 exclusive for container: %s. Set memoryMaxDec to default value: %.2f.",
-				containerName, DefaultMemMaxDec)
+			r.L.Printf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxDec)
 			return DefaultMemMaxDec
 		}
 		return maxDec
@@ -131,16 +136,17 @@ func (r Reconciler) getMemoryMaxDec(containerName string) float64 {
 }
 
 func (r Reconciler) getMemoryMaxInc(containerName string) float64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_MAX_INC", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_MAX_INC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		maxInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memoryMaxInc in annotations for container: %s. Set memoryMaxInc to default value: %.2f.",
-				containerName, DefaultMemMaxInc)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxInc)
 			return DefaultMemMaxInc
 		}
 		if maxInc <= 0 {
-			r.L.Printf("error memoryMaxInc in annotations should be bigger than 0 for container: %s. Set memoryMaxInc to default value: %.2f.",
-				containerName, DefaultMemMaxInc)
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxInc)
 			return DefaultMemMaxInc
 		}
 		return maxInc
@@ -150,16 +156,17 @@ func (r Reconciler) getMemoryMaxInc(containerName string) float64 {
 }
 
 func (r Reconciler) getMemoryCoeffDec(containerName string) float64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_COEFF_DEC", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_COEFF_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		coeffDec, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memoryCoeffDec in annotations for container: %s. Set memoryCoeffDec to default value: %.2f.",
-				containerName, DefaultMemCoeffDec)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffDec)
 			return DefaultMemCoeffDec
 		}
 		if coeffDec <= 0 {
-			r.L.Printf("error memoryCoeffDec in annotations should be bigger than 0 for container: %s. Set memoryCoeffDec to default value: %.2f.",
-				containerName, DefaultMemCoeffDec)
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffDec)
 			return DefaultMemCoeffDec
 		}
 		return coeffDec
@@ -169,16 +176,17 @@ func (r Reconciler) getMemoryCoeffDec(containerName string) float64 {
 }
 
 func (r Reconciler) getMemoryCoeffInc(containerName string) float64 {
-	if v, ok := os.LookupEnv(fmt.Sprintf("%s_MEMORY_COEFF_INC", strings.ToUpper(containerName))); ok {
+	env := fmt.Sprintf("%s_MEMORY_MAX_INC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
 		coeffInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse memoryCoeffInc in annotations for container: %s. Set memoryCoeffInc to default value: %.2f.",
-				containerName, DefaultMemCoeffInc)
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffInc)
 			return DefaultMemCoeffInc
 		}
 		if coeffInc <= 0 {
-			r.L.Printf("error memoryCoeffInc in annotations should be bigger than 0 for container: %s. Set memoryCoeffInc to default value: %.2f.",
-				containerName, DefaultMemCoeffInc)
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffInc)
 			return DefaultMemCoeffInc
 		}
 		return coeffInc
