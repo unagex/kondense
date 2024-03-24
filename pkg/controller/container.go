@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -36,8 +37,16 @@ func (r Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contain
 }
 
 func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
-	cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
-	output, err := cmd.Output()
+	var err error
+	var output []byte
+	for i := 0; i < 3; i++ {
+		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
+		output, err = cmd.Output()
+		if err == nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	if err != nil {
 		return err
 	}

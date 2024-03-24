@@ -1,9 +1,9 @@
 package controller
 
 const (
-	DefaultMemInterval       uint64  = 2
+	DefaultMemInterval       uint64  = 4
 	DefaultMemTargetPressure uint64  = 10_000
-	DefaultMemMaxInc         float64 = 1
+	DefaultMemMaxInc         float64 = 0.5
 	DefaultMemMaxDec         float64 = 0.01
 	DefaultMemCoeffInc       float64 = 20
 	DefaultMemCoeffDec       float64 = 10

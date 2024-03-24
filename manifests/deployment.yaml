@@ -21,29 +21,9 @@ spec:
           limits:
             cpu: 100m
             memory: 100M
-      # - name: ubuntu-2
-      #   image: ubuntu
-      #   command: [ "sleep", "1d" ]
-      #   resources:
-      #     limits:
-      #       cpu: 100m
-      #       memory: 80Mi
       - name: kondense
         image: ghcr.io/unagex/kondense:test
-        env:
-        - name: EXCLUDE
-          value: "kondense"
-        - name: UBUNTU_MEMORY_MIN
-          value: "90M"
-        - name: UBUNTU_MEMORY_MAX
-          value: "200M"
-        - name: UBUNTU_MEMORY_INTERVAL
-          value: "1"
-        - name: UBUNTU_MEMORY_TARGET_PRESSURE
-          value: "5000"
-        - name: UBUNTU_MEMORY_MAX_DEC
-          value: "0.03"
         resources:
           limits:
-            cpu: 0.5
-            memory: 100M
+            cpu: 0.1
+            memory: 60M
