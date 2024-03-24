@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-kondense
+spec:
+  selector:
+    matchLabels:
+      app: test-kondense
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-kondense
+    spec:
+      serviceAccountName: kondense
+      containers:
+      - name: ubuntu
+        image: ubuntu
+        command: [ "sleep", "1d" ]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100M
+      - name: kondense
+        image: ghcr.io/unagex/kondense:test
+        resources:
+          limits:
+            cpu: 0.1
+            memory: 60M

@@ -1,12 +1,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kondense-operator
+  name: kondense
 subjects:
   - kind: ServiceAccount
-    name: kondense-operator
-    namespace: kondense
+    name: kondense
+    namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kondense-operator
+  name: kondense
