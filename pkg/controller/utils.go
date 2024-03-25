@@ -18,7 +18,7 @@ func containersToExclude() []string {
 	return exclude
 }
 
-func getK8SClient() (*http.Client, error) {
+func GetK8SClient() (*http.Client, error) {
 	caCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 	if err != nil {
 		return nil, err

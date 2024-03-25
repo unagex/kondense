@@ -128,11 +128,6 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 }
 
 func (r Reconciler) Adjust(containerName string, factor float64) error {
-	client, err := getK8SClient()
-	if err != nil {
-		return err
-	}
-
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
 	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
@@ -154,7 +149,7 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 	req.Header.Add("Authorization", bearer)
 	req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 
-	resp, err := client.Do(req)
+	resp, err := r.K8sClient.Do(req)
 	if err != nil {
 		return err
 	}

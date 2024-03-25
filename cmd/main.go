@@ -37,9 +37,15 @@ func main() {
 	}
 	namespace := string(namespaceByte)
 
+	K8sClient, err := controller.GetK8SClient()
+	if err != nil {
+		l.Fatal(err)
+	}
+
 	reconciler := controller.Reconciler{
-		Client: mgr.GetClient(),
-		L:      l,
+		Client:    mgr.GetClient(),
+		K8sClient: K8sClient,
+		L:         l,
 
 		Name:      name,
 		Namespace: namespace,

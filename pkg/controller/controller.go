@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"log"
+	"net/http"
 	"sync"
 	"time"
 
@@ -13,7 +14,8 @@ import (
 
 type Reconciler struct {
 	client.Client
-	L *log.Logger
+	K8sClient *http.Client
+	L         *log.Logger
 
 	Namespace string
 	Name      string
