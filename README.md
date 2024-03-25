@@ -1,4 +1,6 @@
 # Kondense
+![Go version](https://img.shields.io/github/go-mod/go-version/unagex/kondense)
+[![Go Report Card](https://goreportcard.com/badge/github.com/unagex/kondense)](https://goreportcard.com/report/github.com/unagex/kondense)
 
 ## Requirements
 kubernetes >=v1.27
