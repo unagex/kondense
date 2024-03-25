@@ -1,5 +1,4 @@
-VERSION ?= test
-IMG ?= ghcr.io/unagex/kondense:${VERSION}
+IMG ?= kondense/kondense:1.0.0
 
 all: build
 
@@ -14,3 +13,6 @@ deploy:
 
 undeploy:
 	kubectl delete -f manifests
+
+push:
+	docker push ${IMG}

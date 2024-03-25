@@ -22,7 +22,7 @@ spec:
             cpu: 100m
             memory: 100M
       - name: kondense
-        image: ghcr.io/unagex/kondense:test
+        image: kondense/kondense:1.0.0
         resources:
           limits:
             cpu: 0.1
