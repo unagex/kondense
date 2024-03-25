@@ -14,8 +14,8 @@ spec:
     spec:
       serviceAccountName: kondense
       containers:
-      - name: ubuntu
-        image: ubuntu
+      - name: stress-ng
+        image: polinux/stress-ng
         command: [ "sleep", "1d" ]
         resources:
           limits:
@@ -27,3 +27,8 @@ spec:
           limits:
             cpu: 0.1
             memory: 60M
+        env:
+        - name: STRESS-NG_MEMORY_INTERVAL
+          value: "1"
+        - name: STRESS-NG_MEMORY_MAX_DEC
+          value: "0.03"
