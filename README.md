@@ -2,7 +2,7 @@
 ![Go version](https://img.shields.io/github/go-mod/go-version/unagex/kondense)
 [![Go Report Card](https://goreportcard.com/badge/github.com/unagex/kondense)](https://goreportcard.com/report/github.com/unagex/kondense)
 
-Kondense is an automated memory sizing tool for kubernetes pods.
+Kondense is an automated memory sizing tool. It runs as a sidecar in kubernetes pods.
 
 ## Background
 Kondense uses real-time memory pressure to determine the optimal memory for each containers in a pod.
@@ -23,7 +23,7 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 1. Containers should have the binary `cat`.
 2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
 
-## Getting Started
+## Example
 
 1. Let's say we have a pod running `nginx` that we want to Kondense:
 ```yaml
@@ -36,6 +36,7 @@ spec:
   - name: nginx
     image: nginx:latest
 ```
+
 2. We need to give resources limit to the nginx container so the QoS will be `Guaranteed`. The memory put do not really matter, Kondense will update it on the fly.
 ```yaml
 apiVersion: v1
@@ -50,6 +51,17 @@ spec:
 👉      limits:
 👉        cpu: 0.1
 👉        memory: 100M
+```
+
+3. Add a `service account` to the pod with the following rules
+```yaml
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
 ```
 
 ## Requirements
