@@ -25,35 +25,49 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 
 ## Example
 
-1. Let's say we have a pod running `nginx` that we want to Kondense.
+Let's say we have a pod running `nginx` that we want to Kondense:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: kondense-test
 spec:
+  serviceAccountName: nginx-user
   containers:
   - name: nginx
     image: nginx:latest
+    resources:
+      limits:
+        cpu: 0.1
+        memory: 100M
 ```
 
-2. We need to give resources limit to the nginx container so the QoS will be `Guaranteed`. The memory put do not really matter, Kondense will update it on the fly.
+Add Kondense as a sidecar:
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: kondense-test
 spec:
-  containers:
-  - name: nginx
-    image: nginx:latest
-👉    resources:
-👉      limits:
-👉        cpu: 0.1
-👉        memory: 100M
+  serviceAccountName: nginx-user
+    containers:
+    - name: nginx
+      image: nginx:latest
+      resources:
+        limits:
+          cpu: 0.1
+          memory: 100M
+    - name: kondense
+      image: kondense/kondense:1.0.0
+      resources:
+        limits:
+          cpu: 0.3
+          memory: 60M
 ```
 
-3. Add a `service account` to the pod with the following rules.
+**Notes:**
+1. The pod should have a QoS of `Guaranteed`. In other words, we need to add resources limits for each containers.
+2. The service account `nginx-user` should have the following rules:
 ```yaml
 rules:
   - apiGroups: [""]
@@ -63,46 +77,7 @@ rules:
     resources: ["pods/exec"]
     verbs: ["create"]
 ```
-The Pod with the new service account
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kondense-test
-spec:
-👉 serviceAccountName: <service account name>
-   containers:
-    - name: nginx
-      image: nginx:latest
-      resources:
-        limits:
-          cpu: 0.1
-          memory: 100M
-```
 
-4. Add `kondense` as a sidecar container
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kondense-test
-spec:
-  serviceAccountName: <service account name>
-    containers:
-    - name: nginx
-      image: nginx:latest
-      resources:
-        limits:
-          cpu: 0.1
-          memory: 100M
-👉   - name: kondense
-👉     image: kondense/kondense:1.0.0
-👉     resources:
-👉         limits:
-👉           cpu: 0.3
-👉           memory: 60M
-```
-
-Congratulations ! Kondense will resize the memory of the nginx container dynamically without container restart.
+After adding the kondense container, the nginx container memory will be updated dynamically without any container restart.
 
 ## Configuration
