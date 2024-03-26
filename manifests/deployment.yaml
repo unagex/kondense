@@ -28,7 +28,11 @@ spec:
             cpu: 0.3
             memory: 60M
         env:
-        - name: STRESS-NG_MEMORY_INTERVAL
-          value: "1"
-        - name: STRESS-NG_MEMORY_MAX_DEC
-          value: "0.03"
+        # - name: STRESS-NG_MEMORY_INTERVAL
+        #   value: "10"
+        # - name: STRESS-NG_MEMORY_MAX_DEC
+        #   value: "0.03"
+        # - name: KONDENSE_MEMORY_INTERVAL
+        #   value: "1"
+        # - name: KONDENSE_MEMORY_MAX_DEC
+        #   value: "0.03"
