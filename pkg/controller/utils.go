@@ -34,3 +34,12 @@ func GetK8SClient() (*http.Client, error) {
 		},
 	}, nil
 }
+
+func GetBearerToken() (string, error) {
+	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	if err != nil {
+		return "", err
+	}
+
+	return "Bearer " + string(token), nil
+}

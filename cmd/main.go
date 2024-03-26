@@ -42,10 +42,16 @@ func main() {
 		l.Fatal(err)
 	}
 
+	bt, err := controller.GetBearerToken()
+	if err != nil {
+		l.Fatalf("failed to get k8s bearer token: %s", err)
+	}
+
 	reconciler := controller.Reconciler{
-		Client:    mgr.GetClient(),
-		K8sClient: K8sClient,
-		L:         l,
+		Client:      mgr.GetClient(),
+		K8sClient:   K8sClient,
+		BearerToken: bt,
+		L:           l,
 
 		Name:      name,
 		Namespace: namespace,

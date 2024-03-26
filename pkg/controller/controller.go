@@ -17,13 +17,16 @@ type Reconciler struct {
 	K8sClient *http.Client
 	L         *log.Logger
 
+	Mu          sync.Mutex
+	BearerToken string
+
 	Namespace string
 	Name      string
 
 	CStats ContainerStats
 }
 
-func (r Reconciler) Reconcile() {
+func (r *Reconciler) Reconcile() {
 	r.CStats = ContainerStats{}
 
 	for {

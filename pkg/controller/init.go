@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (r Reconciler) InitCStats(pod *corev1.Pod) {
+func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 	for _, containerStatus := range pod.Status.ContainerStatuses {
 		exclude := containersToExclude()
 		if slices.Contains(exclude, containerStatus.Name) {
@@ -38,7 +38,7 @@ func (r Reconciler) InitCStats(pod *corev1.Pod) {
 	}
 }
 
-func (r Reconciler) getMemoryMin(containerName string) uint64 {
+func (r *Reconciler) getMemoryMin(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_MIN", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
@@ -59,7 +59,7 @@ func (r Reconciler) getMemoryMin(containerName string) uint64 {
 	return DefaultMemMin
 }
 
-func (r Reconciler) getMemoryMax(containerName string) uint64 {
+func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_MAX", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
@@ -80,7 +80,7 @@ func (r Reconciler) getMemoryMax(containerName string) uint64 {
 	return DefaultMemMax
 }
 
-func (r Reconciler) getMemoryInterval(containerName string) uint64 {
+func (r *Reconciler) getMemoryInterval(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_INTERVAL", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
@@ -95,7 +95,7 @@ func (r Reconciler) getMemoryInterval(containerName string) uint64 {
 	return DefaultMemInterval
 }
 
-func (r Reconciler) getMemoryTargetPressure(containerName string) uint64 {
+func (r *Reconciler) getMemoryTargetPressure(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_TARGET_PRESSURE", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		targetPressure, err := strconv.ParseUint(v, 10, 64)
@@ -115,7 +115,7 @@ func (r Reconciler) getMemoryTargetPressure(containerName string) uint64 {
 	return DefaultMemTargetPressure
 }
 
-func (r Reconciler) getMemoryMaxDec(containerName string) float64 {
+func (r *Reconciler) getMemoryMaxDec(containerName string) float64 {
 	env := fmt.Sprintf("%s_MEMORY_MAX_DEC", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		maxDec, err := strconv.ParseFloat(v, 64)
@@ -135,7 +135,7 @@ func (r Reconciler) getMemoryMaxDec(containerName string) float64 {
 	return DefaultMemMaxDec
 }
 
-func (r Reconciler) getMemoryMaxInc(containerName string) float64 {
+func (r *Reconciler) getMemoryMaxInc(containerName string) float64 {
 	env := fmt.Sprintf("%s_MEMORY_MAX_INC", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		maxInc, err := strconv.ParseFloat(v, 64)
@@ -155,7 +155,7 @@ func (r Reconciler) getMemoryMaxInc(containerName string) float64 {
 	return DefaultMemMaxInc
 }
 
-func (r Reconciler) getMemoryCoeffDec(containerName string) float64 {
+func (r *Reconciler) getMemoryCoeffDec(containerName string) float64 {
 	env := fmt.Sprintf("%s_MEMORY_COEFF_DEC", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		coeffDec, err := strconv.ParseFloat(v, 64)
@@ -175,7 +175,7 @@ func (r Reconciler) getMemoryCoeffDec(containerName string) float64 {
 	return DefaultMemCoeffDec
 }
 
-func (r Reconciler) getMemoryCoeffInc(containerName string) float64 {
+func (r *Reconciler) getMemoryCoeffInc(containerName string) float64 {
 	env := fmt.Sprintf("%s_MEMORY_MAX_INC", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		coeffInc, err := strconv.ParseFloat(v, 64)

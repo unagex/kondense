@@ -25,7 +25,7 @@ spec:
         image: kondense/kondense:1.0.0
         resources:
           limits:
-            cpu: 0.1
+            cpu: 0.3
             memory: 60M
         env:
         - name: STRESS-NG_MEMORY_INTERVAL

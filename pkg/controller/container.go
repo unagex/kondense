@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"os/exec"
 	"slices"
 	"strconv"
@@ -16,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (r Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
+func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	exclude := containersToExclude()
@@ -36,7 +35,7 @@ func (r Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contain
 	}
 }
 
-func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
+func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
 	var err error
 	var output []byte
 	for i := 0; i < 3; i++ {
@@ -98,7 +97,7 @@ func (r Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) err
 	return nil
 }
 
-func (r Reconciler) KondenseContainer(container corev1.Container) error {
+func (r *Reconciler) KondenseContainer(container corev1.Container) error {
 	s := r.CStats[container.Name]
 
 	if s.Mem.Integral > s.Mem.TargetPressure {
@@ -127,7 +126,7 @@ func (r Reconciler) KondenseContainer(container corev1.Container) error {
 	return r.Adjust(container.Name, -adj)
 }
 
-func (r Reconciler) Adjust(containerName string, factor float64) error {
+func (r *Reconciler) Adjust(containerName string, factor float64) error {
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
 	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
@@ -141,17 +140,32 @@ func (r Reconciler) Adjust(containerName string, factor float64) error {
 	if err != nil {
 		return err
 	}
-	token, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		return err
-	}
-	var bearer = "Bearer " + string(token)
-	req.Header.Add("Authorization", bearer)
+
+	r.Mu.Lock()
+	bt := r.BearerToken
+	r.Mu.Unlock()
+
+	req.Header.Add("Authorization", bt)
 	req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 
 	resp, err := r.K8sClient.Do(req)
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		// renew k8s token
+		bt, err := GetBearerToken()
+		if err != nil {
+			r.L.Fatalf("failed to renew k8s bearer token: %s", err)
+		}
+
+		r.Mu.Lock()
+		r.L.Print("renewed k8s bearer token")
+		r.BearerToken = bt
+		r.Mu.Unlock()
+
+		return r.Adjust(containerName, factor)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
