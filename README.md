@@ -14,17 +14,18 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 ## Requirements
 
 ### On Kubernetes
-1. The Kubernetes cluster must run on Linux
-2. Kubernetes version >= 1.27
-3. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled
+1. The Kubernetes cluster must run on Linux.
+2. Kubernetes version >= 1.27.
+3. Containerd version >= 1.6.9.
+4. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled.
 
 ### On Containers
-1. Containers should have the binary `cat`
+1. Containers should have the binary `cat`.
 2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
 
 ## Getting Started
 
-1. Let's say we have a pod running nginx that we want to Kondense:
+1. Let's say we have a pod running `nginx` that we want to Kondense:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -46,17 +47,7 @@ containerd >=v1.6.9
 minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
 ```
 
-2. Create pod
-```bash
-kubectl apply -f pod.yaml
-```
-
 3. Patch Pod
 ```bash
 kubectl patch pod test-kondense-7fd64b45c5-42nnb --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "200Mi", "cpu":"100m"},"requests":{"memory": "200Mi", "cpu":"100m"}}}]}}'
-```
-
-4. Scaleway add feature gate
-```bash
-scw k8s cluster update 0b4db211-543d-407e-9d3e-e3c7b9945fe5 feature-gates.0=InPlacePodVerticalScaling
 ```
