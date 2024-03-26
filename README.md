@@ -12,13 +12,19 @@ Allocated memory is not a good proxy for required memory. Many libraries used du
 Kondense uses the memory pressure given by the Linux Kernel to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
 ## Requirements
+
+### On Kubernetes
 1. The Kubernetes cluster must run on Linux
 2. Kubernetes version >= 1.27
-3. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled.
+3. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled
+
+### On Containers
+1. Containers should have the binary `cat`
+2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
 
 ## Getting Started
 
-Let's say we have a pod running nginx that we want to Kondense:
+1. Let's say we have a pod running nginx that we want to Kondense:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -29,6 +35,7 @@ spec:
   - name: nginx
     image: nginx:latest
 ```
+2. To make te
 
 ## Requirements
 kubernetes >=v1.27
