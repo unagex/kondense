@@ -12,6 +12,13 @@ Allocated memory is not a good proxy for required memory. Many libraries used du
 Kondense uses the memory pressure given by the Linux Kernel to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
 ## Requirements
+1. The Kubernetes cluster must run on Linux
+2. Kubernetes version >= 1.27
+3. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled.
+
+## Getting Started
+
+## Requirements
 kubernetes >=v1.27
 containerd >=v1.6.9
 
