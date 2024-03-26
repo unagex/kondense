@@ -18,6 +18,18 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 
 ## Getting Started
 
+Let's say we have a pod running nginx that we want to Kondense:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kondense-test
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+```
+
 ## Requirements
 kubernetes >=v1.27
 containerd >=v1.6.9
