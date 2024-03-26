@@ -36,7 +36,21 @@ spec:
   - name: nginx
     image: nginx:latest
 ```
-2. To make te
+2. We need to give resources limit to the nginx container so the QoS will be `Guaranteed`. The memory put do not really matter, Kondense will update it on the fly.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kondense-test
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+👉    resources:
+👉      limits:
+👉        cpu: 0.1
+👉        memory: 100M
+```
 
 ## Requirements
 kubernetes >=v1.27
