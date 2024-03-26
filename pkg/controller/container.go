@@ -161,7 +161,7 @@ func (r *Reconciler) Adjust(containerName string, factor float64) error {
 		}
 
 		r.Mu.Lock()
-		r.L.Print("renewed k8s bearer token")
+		r.L.Print("renewed k8s bearer token.")
 		r.BearerToken = bt
 		r.Mu.Unlock()
 

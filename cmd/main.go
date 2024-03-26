@@ -48,10 +48,11 @@ func main() {
 	}
 
 	reconciler := controller.Reconciler{
-		Client:      mgr.GetClient(),
-		K8sClient:   K8sClient,
+		Client:    mgr.GetClient(),
+		K8sClient: K8sClient,
+		L:         l,
+
 		BearerToken: bt,
-		L:           l,
 
 		Name:      name,
 		Namespace: namespace,
