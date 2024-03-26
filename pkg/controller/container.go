@@ -40,6 +40,10 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	var output []byte
 	for i := 0; i < 3; i++ {
 		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
+		// we don't need kubectl for kondense container.
+		if strings.ToLower(container.Name) == "kondense" {
+			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure")
+		}
 		output, err = cmd.Output()
 		if err == nil {
 			break
