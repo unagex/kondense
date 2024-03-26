@@ -25,7 +25,7 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 
 ## Example
 
-1. Let's say we have a pod running `nginx` that we want to Kondense:
+1. Let's say we have a pod running `nginx` that we want to Kondense.
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -53,7 +53,7 @@ spec:
 👉        memory: 100M
 ```
 
-3. Add a `service account` to the pod with the following rules
+3. Add a `service account` to the pod with the following rules.
 ```yaml
 rules:
   - apiGroups: [""]
@@ -63,17 +63,46 @@ rules:
     resources: ["pods/exec"]
     verbs: ["create"]
 ```
-
-## Requirements
-kubernetes >=v1.27
-containerd >=v1.6.9
-
-1. Start kind with the feature gate InPlacePodVerticalScaling.
-```bash
-minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
+The Pod with the new service account
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kondense-test
+spec:
+👉 serviceAccountName: <service account name>
+   containers:
+    - name: nginx
+      image: nginx:latest
+      resources:
+        limits:
+          cpu: 0.1
+          memory: 100M
 ```
 
-3. Patch Pod
-```bash
-kubectl patch pod test-kondense-7fd64b45c5-42nnb --patch '{"spec":{"containers":[{"name":"ubuntu", "resources":{"limits":{"memory": "200Mi", "cpu":"100m"},"requests":{"memory": "200Mi", "cpu":"100m"}}}]}}'
+4. Add `kondense` as a sidecar container
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kondense-test
+spec:
+  serviceAccountName: <service account name>
+    containers:
+    - name: nginx
+      image: nginx:latest
+      resources:
+        limits:
+          cpu: 0.1
+          memory: 100M
+👉   - name: kondense
+👉     image: kondense/kondense:1.0.0
+👉     resources:
+👉         limits:
+👉           cpu: 0.3
+👉           memory: 60M
 ```
+
+Congratulations ! Kondense will resize the memory of the nginx container dynamically without container restart.
+
+## Configuration
