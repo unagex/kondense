@@ -115,3 +115,6 @@ If we have a container named `nginx` in our pod, the variable name should be `NG
 | \<CONTAINER NAME>\_MEMORY_COEFF_INC | 20 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations: when the coeff is 20, the curve reaches the adjustment limit when pressure is 20 times the target pressure. |
 | \<CONTAINER NAME>\_MEMORY_COEFF_DEC | 10 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations. The adjustment becomes exponentially more aggressive as observed pressure falls below the target pressure and reaches the adjustment limit. |
 
+#### More
+- Kondense is based on [Facebook senpai](https://github.com/facebookincubator/senpai/tree/main)
+- Kondense is active on himself by default
