@@ -106,5 +106,12 @@ If we have a container named `nginx` in our pod, the variable name should be `NG
 | --- | --- | --- |
 | EXCLUDE | "" | Comma separated list of containers to not kondense. |
 | \<CONTAINER NAME>\_MEMORY_MIN | 50M | Minimum memory of the container. Kondense will never resize below that limit. |
-| \<CONTAINER NAME>\_MEMORY_MAX | 100G | Maximum memory of the container. Kondense will never resize above that limit.
+| \<CONTAINER NAME>\_MEMORY_MAX | 100G | Maximum memory of the container. Kondense will never resize above that limit. |
+| \<CONTAINER NAME>\_MEMORY_TARGET_PRESSURE | 10000 | Target memory pressure. Kondense will take corrective actions to obtain it. |
+| \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
+| \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
+| \<CONTAINER NAME>\_MEMORY_MAX_INC | 0.5 | Maximum memory increase for one correction. e.g. 0.5 is a 50% increase. |
+| \<CONTAINER NAME>\_MEMORY_MAX_DEC | 0.02 | Maximum memory decrease for one correction. e.g. 0.02 is a 2% decrease. |
+| \<CONTAINER NAME>\_MEMORY_COEFF_INC | 20 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations: when the coeff is 20, the curve reaches the adjustment limit when pressure is 20 times the target pressure. |
+| \<CONTAINER NAME>\_MEMORY_COEFF_DEC | 10 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations. The adjustment becomes exponentially more aggressive as observed pressure falls below the target pressure and reaches the adjustment limit. |
 
