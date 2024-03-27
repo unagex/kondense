@@ -62,7 +62,7 @@ spec:
       resources:
         limits:
           cpu: 0.3
-          memory: 60M
+          memory: 50M
 ```
 
 **Notes:**
