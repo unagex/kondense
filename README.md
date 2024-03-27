@@ -81,3 +81,30 @@ rules:
 After adding the kondense container, the nginx container memory will be updated dynamically without any container restart.
 
 ## Configuration
+
+Kondense is configurable via environment variables in the kondense container.
+
+#### Example
+```yaml
+    ...
+    - name: kondense
+      image: kondense/kondense:1.0.0
+      resources:
+        limits:
+          cpu: 0.3
+          memory: 50M
+      env:
+      - name: <CONTAINER NAME>_MEMORY_INTERVAL
+        value: "5"
+```
+
+If we have a container named `nginx` in our pod, the variable name should be `NGINX_MEMORY_INTERVAL`.
+
+#### Environment variables
+
+| Name | Default value | Description |
+| --- | --- | --- |
+| EXCLUDE | "" | Comma separated list of containers to not kondense. |
+| \<CONTAINER NAME>\_MEMORY_MIN | 50M | Minimum memory of the container. Kondense will never resize below that limit. |
+| \<CONTAINER NAME>\_MEMORY_MAX | 100G | Maximum memory of the container. Kondense will never resize above that limit.
+
