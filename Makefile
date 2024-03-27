@@ -1,4 +1,4 @@
-IMG ?= kondense/kondense:1.0.0
+IMG ?= kondense/kondense:1.0.1
 
 all: build
 
