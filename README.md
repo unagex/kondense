@@ -26,7 +26,7 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 ## Example
 Try the example:
 ```bash
-kubectl apply -f https://github.com/unagex/kondense/example/nginx.yaml
+kubectl apply -f https://raw.githubusercontent.com/unagex/kondense/main/example/nginx.yaml
 ```
 
 Let's say we have a pod running `nginx` that we want to Kondense:
