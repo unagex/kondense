@@ -24,6 +24,10 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
 
 ## Example
+Try the example:
+```bash
+kubectl apply -f https://github.com/unagex/kondense/example/nginx.yaml
+```
 
 Let's say we have a pod running `nginx` that we want to Kondense:
 ```yaml
@@ -64,6 +68,8 @@ spec:
         cpu: 0.3
         memory: 50M
 ```
+
+
 
 **Notes:**
 1. The pod should have a QoS of `Guaranteed`. In other words, we need to add resources limits for each containers.

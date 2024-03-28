@@ -1,0 +1,53 @@
+# Create a service account, a clusterRole, a clusterRoleBinding and a Pod.
+# The Pod will have Kondense enabled and will do dynamic memory resize of the nginx container.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kondense-user
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kondense
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kondense
+subjects:
+  - kind: ServiceAccount
+    name: kondense-user
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kondense
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kondense-test
+spec:
+  serviceAccountName: kondense-user
+  containers:
+  - name: nginx
+    image: nginx:latest
+    resources:
+      limits:
+        cpu: 0.1
+        memory: 100M
+  - name: kondense
+    image: kondense/kondense:1.0.1
+    resources:
+      limits:
+        cpu: 0.3
+        memory: 50M
