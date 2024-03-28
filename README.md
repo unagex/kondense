@@ -50,19 +50,19 @@ metadata:
   name: kondense-test
 spec:
   serviceAccountName: nginx-user
-    containers:
-    - name: nginx
-      image: nginx:latest
-      resources:
-        limits:
-          cpu: 0.1
-          memory: 100M
-    - name: kondense
-      image: kondense/kondense:1.0.1
-      resources:
-        limits:
-          cpu: 0.3
-          memory: 50M
+  containers:
+  - name: nginx
+    image: nginx:latest
+    resources:
+      limits:
+        cpu: 0.1
+        memory: 100M
+  - name: kondense
+    image: kondense/kondense:1.0.1
+    resources:
+      limits:
+        cpu: 0.3
+        memory: 50M
 ```
 
 **Notes:**
