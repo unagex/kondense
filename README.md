@@ -24,8 +24,9 @@ Kondense uses the memory pressure given by the Linux Kernel to apply just the ri
 2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
 
 ## Example
-Try the example:
+Try the example on minikube:
 ```bash
+minikube start --kubernetes-version=v1.29.2 --feature-gates=InPlacePodVerticalScaling=true
 kubectl apply -f https://raw.githubusercontent.com/unagex/kondense/main/example/nginx.yaml
 ```
 
