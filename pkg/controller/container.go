@@ -12,13 +12,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	exclude := containersToExclude()
+	exclude := utils.ContainersToExclude()
 	if slices.Contains(exclude, container.Name) {
 		return
 	}
@@ -152,14 +153,14 @@ func (r *Reconciler) Adjust(containerName string, factor float64) error {
 	req.Header.Add("Authorization", bt)
 	req.Header.Add("Content-Type", "application/strategic-merge-patch+json")
 
-	resp, err := r.K8sClient.Do(req)
+	resp, err := r.RawClient.Do(req)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		// renew k8s token
-		bt, err := GetBearerToken()
+		bt, err := utils.GetBearerToken()
 		if err != nil {
 			r.L.Fatalf("failed to renew k8s bearer token: %s", err)
 		}

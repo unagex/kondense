@@ -1,4 +1,4 @@
-package controller
+package utils
 
 import (
 	"crypto/tls"
@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
-func containersToExclude() []string {
+func ContainersToExclude() []string {
 	exclude := []string{}
 	l, ok := os.LookupEnv("EXCLUDE")
 	if ok {
@@ -18,7 +21,20 @@ func containersToExclude() []string {
 	return exclude
 }
 
-func GetK8SClient() (*http.Client, error) {
+func GetClient() (*kubernetes.Clientset, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func GetRawClient() (*http.Client, error) {
 	caCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 	if err != nil {
 		return nil, err

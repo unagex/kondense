@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		exclude := containersToExclude()
+		exclude := utils.ContainersToExclude()
 		if slices.Contains(exclude, containerStatus.Name) {
 			continue
 		}
