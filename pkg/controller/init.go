@@ -31,7 +31,19 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 					MaxDec:         r.getMemoryMaxDec(containerStatus.Name),
 					CoeffInc:       r.getMemoryCoeffInc(containerStatus.Name),
 					CoeffDec:       r.getMemoryCoeffDec(containerStatus.Name),
-				}}
+				},
+				Cpu: CPU{
+					Min:            r.getCPUMin(containerStatus.Name),
+					Max:            r.getCPUMax(containerStatus.Name),
+					GraceTicks:     r.getCPUInterval(containerStatus.Name),
+					Interval:       r.getCPUInterval(containerStatus.Name),
+					TargetPressure: r.getCPUTargetPressure(containerStatus.Name),
+					MaxInc:         r.getCPUMaxInc(containerStatus.Name),
+					MaxDec:         r.getCPUMaxDec(containerStatus.Name),
+					CoeffInc:       r.getCPUCoeffInc(containerStatus.Name),
+					CoeffDec:       r.getCPUCoeffDec(containerStatus.Name),
+				},
+			}
 		}
 
 		limit := containerStatus.AllocatedResources.Memory().Value()
@@ -60,6 +72,27 @@ func (r *Reconciler) getMemoryMin(containerName string) uint64 {
 	return DefaultMemMin
 }
 
+func (r *Reconciler) getCPUMin(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MIN", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		minQ, err := resource.ParseQuantity(v)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f cpu(s).",
+				env, env, DefaultCPUMin)
+			return DefaultCPUMin
+		}
+		min := minQ.AsApproximateFloat64()
+		if min <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f cpu(s)",
+				env, env, DefaultCPUMin)
+			return DefaultCPUMin
+		}
+		return float64(min)
+	}
+
+	return DefaultCPUMin
+}
+
 func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_MAX", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
@@ -81,6 +114,27 @@ func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	return DefaultMemMax
 }
 
+func (r *Reconciler) getCPUMax(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		maxQ, err := resource.ParseQuantity(v)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f cpu(s).",
+				env, env, DefaultCPUMax)
+			return DefaultCPUMax
+		}
+		max := maxQ.Value()
+		if max <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f cpu(s)",
+				env, env, DefaultCPUMax)
+			return DefaultCPUMax
+		}
+		return float64(max)
+	}
+
+	return DefaultCPUMax
+}
+
 func (r *Reconciler) getMemoryInterval(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_INTERVAL", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
@@ -94,6 +148,21 @@ func (r *Reconciler) getMemoryInterval(containerName string) uint64 {
 	}
 
 	return DefaultMemInterval
+}
+
+func (r *Reconciler) getCPUInterval(containerName string) uint64 {
+	env := fmt.Sprintf("%s_CPU_INTERVAL", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		interval, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d.",
+				env, env, DefaultCPUInterval)
+			return DefaultCPUInterval
+		}
+		return interval
+	}
+
+	return DefaultCPUInterval
 }
 
 func (r *Reconciler) getMemoryTargetPressure(containerName string) uint64 {
@@ -116,24 +185,24 @@ func (r *Reconciler) getMemoryTargetPressure(containerName string) uint64 {
 	return DefaultMemTargetPressure
 }
 
-func (r *Reconciler) getMemoryMaxDec(containerName string) float64 {
-	env := fmt.Sprintf("%s_MEMORY_MAX_DEC", strings.ToUpper(containerName))
+func (r *Reconciler) getCPUTargetPressure(containerName string) uint64 {
+	env := fmt.Sprintf("%s_CPU_TARGET_PRESSURE", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
-		maxDec, err := strconv.ParseFloat(v, 64)
+		targetPressure, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
-				env, env, DefaultMemMaxDec)
-			return DefaultMemMaxDec
+			r.L.Printf("error cannot parse environment variable: %s pressure. Set %s to default value: %d ns.",
+				env, env, DefaultCPUTargetPressure)
+			return DefaultCPUTargetPressure
 		}
-		if maxDec <= 0 || maxDec >= 1 {
-			r.L.Printf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
-				env, env, DefaultMemMaxDec)
-			return DefaultMemMaxDec
+		if targetPressure == 0 {
+			r.L.Printf("error environment variable: %s should be more than 0. Set %s to default value: %d ns.",
+				env, env, DefaultCPUTargetPressure)
+			return DefaultCPUTargetPressure
 		}
-		return maxDec
+		return targetPressure
 	}
 
-	return DefaultMemMaxDec
+	return DefaultCPUTargetPressure
 }
 
 func (r *Reconciler) getMemoryMaxInc(containerName string) float64 {
@@ -156,24 +225,64 @@ func (r *Reconciler) getMemoryMaxInc(containerName string) float64 {
 	return DefaultMemMaxInc
 }
 
-func (r *Reconciler) getMemoryCoeffDec(containerName string) float64 {
-	env := fmt.Sprintf("%s_MEMORY_COEFF_DEC", strings.ToUpper(containerName))
+func (r *Reconciler) getCPUMaxInc(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX_INC", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
-		coeffDec, err := strconv.ParseFloat(v, 64)
+		maxInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
-				env, env, DefaultMemCoeffDec)
-			return DefaultMemCoeffDec
+				env, env, DefaultCPUMaxInc)
+			return DefaultCPUMaxInc
 		}
-		if coeffDec <= 0 {
+		if maxInc <= 0 {
 			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
-				env, env, DefaultMemCoeffDec)
-			return DefaultMemCoeffDec
+				env, env, DefaultCPUMaxInc)
+			return DefaultCPUMaxInc
 		}
-		return coeffDec
+		return maxInc
 	}
 
-	return DefaultMemCoeffDec
+	return DefaultCPUMaxInc
+}
+
+func (r *Reconciler) getMemoryMaxDec(containerName string) float64 {
+	env := fmt.Sprintf("%s_MEMORY_MAX_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		maxDec, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxDec)
+			return DefaultMemMaxDec
+		}
+		if maxDec <= 0 || maxDec >= 1 {
+			r.L.Printf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
+				env, env, DefaultMemMaxDec)
+			return DefaultMemMaxDec
+		}
+		return maxDec
+	}
+
+	return DefaultMemMaxDec
+}
+
+func (r *Reconciler) getCPUMaxDec(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		maxDec, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxDec)
+			return DefaultCPUMaxDec
+		}
+		if maxDec <= 0 || maxDec >= 1 {
+			r.L.Printf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxDec)
+			return DefaultCPUMaxDec
+		}
+		return maxDec
+	}
+
+	return DefaultCPUMaxDec
 }
 
 func (r *Reconciler) getMemoryCoeffInc(containerName string) float64 {
@@ -194,4 +303,64 @@ func (r *Reconciler) getMemoryCoeffInc(containerName string) float64 {
 	}
 
 	return DefaultMemCoeffInc
+}
+
+func (r *Reconciler) getCPUCoeffInc(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX_INC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		coeffInc, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUCoeffInc)
+			return DefaultCPUCoeffInc
+		}
+		if coeffInc <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultCPUCoeffInc)
+			return DefaultCPUCoeffInc
+		}
+		return coeffInc
+	}
+
+	return DefaultCPUCoeffInc
+}
+
+func (r *Reconciler) getMemoryCoeffDec(containerName string) float64 {
+	env := fmt.Sprintf("%s_MEMORY_COEFF_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		coeffDec, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffDec)
+			return DefaultMemCoeffDec
+		}
+		if coeffDec <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultMemCoeffDec)
+			return DefaultMemCoeffDec
+		}
+		return coeffDec
+	}
+
+	return DefaultMemCoeffDec
+}
+
+func (r *Reconciler) getCPUCoeffDec(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_COEFF_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		coeffDec, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUCoeffDec)
+			return DefaultCPUCoeffDec
+		}
+		if coeffDec <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultCPUCoeffDec)
+			return DefaultCPUCoeffDec
+		}
+		return coeffDec
+	}
+
+	return DefaultCPUCoeffDec
 }
