@@ -103,6 +103,13 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 }
 
 func (r *Reconciler) KondenseContainer(container corev1.Container) error {
+	MemFactor := r.KondenseMemory(container)
+	// CpuFactor := r.KondenseCPU(container)
+
+	return r.Adjust(container.Name, MemFactor)
+}
+
+func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 	s := r.CStats[container.Name]
 
 	if s.Mem.Integral > s.Mem.TargetPressure {
@@ -112,13 +119,15 @@ func (r *Reconciler) KondenseContainer(container corev1.Container) error {
 		adj = min(adj*s.Mem.MaxInc, s.Mem.MaxInc)
 
 		s.Mem.GraceTicks = s.Mem.Interval - 1
-		return r.Adjust(container.Name, adj)
+		// return r.Adjust(container.Name, adj)
+		return adj
 	}
 
 	// tighten the limit when grace ticks goes to 0.
 	if s.Mem.GraceTicks > 0 {
 		s.Mem.GraceTicks -= 1
-		return nil
+		return 0
+		// return nil
 	}
 
 	// tighten the limit.
@@ -128,7 +137,8 @@ func (r *Reconciler) KondenseContainer(container corev1.Container) error {
 
 	s.Mem.GraceTicks = s.Mem.Interval - 1
 
-	return r.Adjust(container.Name, -adj)
+	// return r.Adjust(container.Name, -adj)
+	return -adj
 }
 
 func (r *Reconciler) Adjust(containerName string, factor float64) error {
