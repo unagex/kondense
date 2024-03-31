@@ -40,10 +40,10 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	var err error
 	var output []byte
 	for i := 0; i < 3; i++ {
-		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure")
+		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.pressure")
 		// we don't need kubectl for kondense container.
 		if strings.ToLower(container.Name) == "kondense" {
-			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure")
+			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.pressure")
 		}
 		output, err = cmd.Output()
 		if err == nil {
@@ -55,39 +55,48 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 		return err
 	}
 
-	some := strings.Split(string(output), " ")
-	if len(some) != 9 {
-		return fmt.Errorf("error got unexpected memory.pressure for container %s: %s", container.Name, output)
+	txt := strings.Split(string(output), " ")
+	if len(txt) != 17 {
+		return fmt.Errorf("error got unexpected pressure stats for container %s: %s", container.Name, txt)
 	}
 
-	totalTmp := strings.TrimPrefix(some[4], "total=")
+	err = r.UpdateMemStats(container.Name, txt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {
+	totalTmp := strings.TrimPrefix(txt[4], "total=")
 	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
 	total, err := strconv.ParseUint(totalTmp, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	s := r.CStats[container.Name]
+	s := r.CStats[containerName]
 
 	delta := total - s.Mem.PrevTotal
 	s.Mem.PrevTotal = total
 	s.Mem.Integral += delta
 
-	avg10Tmp := strings.TrimPrefix(some[1], "avg10=")
+	avg10Tmp := strings.TrimPrefix(txt[1], "avg10=")
 	avg10, err := strconv.ParseFloat(avg10Tmp, 64)
 	if err != nil {
 		return err
 	}
 	s.Mem.AVG10 = avg10
 
-	avg60Tmp := strings.TrimPrefix(some[2], "avg60=")
+	avg60Tmp := strings.TrimPrefix(txt[2], "avg60=")
 	avg60, err := strconv.ParseFloat(avg60Tmp, 64)
 	if err != nil {
 		return err
 	}
 	s.Mem.AVG60 = avg60
 
-	avg300Tmp := strings.TrimPrefix(some[3], "avg300=")
+	avg300Tmp := strings.TrimPrefix(txt[3], "avg300=")
 	avg300, err := strconv.ParseFloat(avg300Tmp, 64)
 	if err != nil {
 		return err
@@ -95,7 +104,7 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	s.Mem.AVG300 = avg300
 
 	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_dec=%d total=%d delta=%d integral=%d",
-		container.Name, s.Mem.Limit,
+		containerName, s.Mem.Limit,
 		avg10, avg60, avg300,
 		s.Mem.GraceTicks, total, delta, s.Mem.Integral)
 
