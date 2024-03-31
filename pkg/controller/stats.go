@@ -24,8 +24,11 @@ const (
 	DefaultCPUCoeffInc       float64 = 20
 	DefaultCPUCoeffDec       float64 = 10
 
-	DefaultCPUMin float64 = 0.1
-	DefaultCPUMax float64 = 100
+	// DefaultCPUMin in milliCPU, 10 is 0.01 cpu.
+	DefaultCPUMin uint64 = 10
+
+	// DefaultCPUMax in milliCPU, 100_000 is 100 cpus.
+	DefaultCPUMax uint64 = 100_000
 )
 
 type ContainerStats map[string]*Stats
@@ -60,9 +63,9 @@ type Memory struct {
 }
 
 type CPU struct {
-	// Limit     int64
+	Limit int64
 	// PrevTotal uint64
-	// Integral  uint64
+	Integral uint64
 	// Current   int64
 
 	TargetPressure uint64
@@ -72,8 +75,8 @@ type CPU struct {
 	CoeffInc float64
 	CoeffDec float64
 
-	Min float64
-	Max float64
+	Min uint64
+	Max uint64
 
 	// AVG10  float64
 	// AVG60  float64

@@ -46,8 +46,11 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 			}
 		}
 
-		limit := containerStatus.AllocatedResources.Memory().Value()
-		r.CStats[containerStatus.Name].Mem.Limit = limit
+		mem := containerStatus.AllocatedResources.Memory().Value()
+		cpu := containerStatus.AllocatedResources.Cpu().AsApproximateFloat64()
+
+		r.CStats[containerStatus.Name].Mem.Limit = mem
+		r.CStats[containerStatus.Name].Cpu.Limit = int64(cpu * 1000)
 	}
 }
 
@@ -72,22 +75,22 @@ func (r *Reconciler) getMemoryMin(containerName string) uint64 {
 	return DefaultMemMin
 }
 
-func (r *Reconciler) getCPUMin(containerName string) float64 {
+func (r *Reconciler) getCPUMin(containerName string) uint64 {
 	env := fmt.Sprintf("%s_CPU_MIN", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f cpu(s).",
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
 				env, env, DefaultCPUMin)
 			return DefaultCPUMin
 		}
-		min := minQ.AsApproximateFloat64()
+		min := minQ.Value()
 		if min <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f cpu(s)",
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMin)
 			return DefaultCPUMin
 		}
-		return float64(min)
+		return uint64(min)
 	}
 
 	return DefaultCPUMin
@@ -114,22 +117,22 @@ func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	return DefaultMemMax
 }
 
-func (r *Reconciler) getCPUMax(containerName string) float64 {
+func (r *Reconciler) getCPUMax(containerName string) uint64 {
 	env := fmt.Sprintf("%s_CPU_MAX", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f cpu(s).",
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
 				env, env, DefaultCPUMax)
 			return DefaultCPUMax
 		}
 		max := maxQ.Value()
 		if max <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f cpu(s)",
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMax)
 			return DefaultCPUMax
 		}
-		return float64(max)
+		return uint64(max)
 	}
 
 	return DefaultCPUMax

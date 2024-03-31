@@ -103,10 +103,14 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 }
 
 func (r *Reconciler) KondenseContainer(container corev1.Container) error {
-	MemFactor := r.KondenseMemory(container)
-	// CpuFactor := r.KondenseCPU(container)
+	memFactor := r.KondenseMemory(container)
+	cpuFactor := r.KondenseCPU(container)
 
-	return r.Adjust(container.Name, MemFactor)
+	if math.Abs(memFactor) < 0.01 && math.Abs(cpuFactor) < 0.01 {
+		return nil
+	}
+
+	return r.Adjust(container.Name, memFactor, cpuFactor)
 }
 
 func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
@@ -141,15 +145,46 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 	return -adj
 }
 
-func (r *Reconciler) Adjust(containerName string, factor float64) error {
+func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
+	s := r.CStats[container.Name]
+
+	if s.Cpu.Integral > s.Cpu.TargetPressure {
+		// Increase exponentially as we deviate from the target pressure.
+		diff := s.Cpu.Integral / s.Cpu.TargetPressure
+		adj := math.Pow(float64(diff)/DefaultCPUCoeffInc, 2)
+		adj = min(adj*s.Cpu.MaxInc, s.Cpu.MaxInc)
+
+		s.Cpu.GraceTicks = s.Cpu.Interval - 1
+		return adj
+	}
+
+	// tighten the limit when grace ticks goes to 0.
+	if s.Cpu.GraceTicks > 0 {
+		s.Cpu.GraceTicks -= 1
+		return 0
+	}
+
+	// tighten the limit.
+	diff := s.Cpu.TargetPressure / max(s.Cpu.Integral, 1)
+	adj := math.Pow(float64(diff)/s.Cpu.CoeffDec, 2)
+	adj = min(adj*s.Cpu.MaxDec, s.Cpu.MaxDec)
+
+	s.Cpu.GraceTicks = s.Cpu.Interval - 1
+	return -adj
+}
+
+func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
-	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + factor))
+	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + memFactor))
 	newMemory = min(max(newMemory, r.CStats[containerName].Mem.Min), r.CStats[containerName].Mem.Max)
 
+	newCPU := uint64(float64(r.CStats[containerName].Cpu.Limit) * (1 + cpuFactor))
+	newCPU = min(max(newCPU, r.CStats[containerName].Cpu.Min), r.CStats[containerName].Mem.Max)
+
 	body := []byte(fmt.Sprintf(
-		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d"},"requests":{"memory": "%d"}}}]}}`,
-		containerName, newMemory, newMemory))
+		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu": "%dm"},"requests":{"memory": "%d", "cpu": "%dm"}}}]}}`,
+		containerName, newMemory, newCPU, newMemory, newCPU))
 
 	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
 	if err != nil {
@@ -180,13 +215,14 @@ func (r *Reconciler) Adjust(containerName string, factor float64) error {
 		r.BearerToken = bt
 		r.Mu.Unlock()
 
-		return r.Adjust(containerName, factor)
+		return r.Adjust(containerName, memFactor, cpuFactor)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
 			http.StatusOK, resp.StatusCode)
 	}
-	r.L.Printf("patched container %s with factor: %.2f and new memory: %d bytes.", containerName, factor, newMemory)
+	r.L.Printf("patched container %s with mem factor: %.2f and new memory: %d bytes and with cpu factor : %.2f and new cpu: %d.",
+		containerName, memFactor, newMemory, cpuFactor, newCPU)
 
 	r.CStats[containerName].Mem.Integral = 0
 
