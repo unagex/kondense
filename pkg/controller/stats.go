@@ -42,7 +42,6 @@ type Memory struct {
 	Limit     int64
 	PrevTotal uint64
 	Integral  uint64
-	Current   int64
 
 	TargetPressure uint64
 
@@ -53,20 +52,15 @@ type Memory struct {
 
 	Min uint64
 	Max uint64
-
-	AVG10  float64
-	AVG60  float64
-	AVG300 float64
 
 	GraceTicks uint64
 	Interval   uint64
 }
 
 type CPU struct {
-	Limit int64
-	// PrevTotal uint64
-	Integral uint64
-	// Current   int64
+	Limit     int64
+	PrevTotal uint64
+	Integral  uint64
 
 	TargetPressure uint64
 
@@ -77,10 +71,6 @@ type CPU struct {
 
 	Min uint64
 	Max uint64
-
-	// AVG10  float64
-	// AVG60  float64
-	// AVG300 float64
 
 	GraceTicks uint64
 	Interval   uint64

@@ -65,10 +65,24 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 		return err
 	}
 
+	err = r.UpdateCPUStats(container.Name, txt)
+	if err != nil {
+		return err
+	}
+
+	s := r.CStats[container.Name]
+	r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d cpu_time_to_dec=%d cpu_total=%d, cpu_integral=%d",
+		container.Name,
+		s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
+		s.Cpu.Limit, s.Cpu.GraceTicks, s.Cpu.PrevTotal, s.Cpu.Integral,
+	)
+
 	return nil
 }
 
 func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {
+	s := r.CStats[containerName]
+
 	totalTmp := strings.TrimPrefix(txt[4], "total=")
 	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
 	total, err := strconv.ParseUint(totalTmp, 10, 64)
@@ -76,37 +90,26 @@ func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {
 		return err
 	}
 
-	s := r.CStats[containerName]
-
 	delta := total - s.Mem.PrevTotal
 	s.Mem.PrevTotal = total
 	s.Mem.Integral += delta
 
-	avg10Tmp := strings.TrimPrefix(txt[1], "avg10=")
-	avg10, err := strconv.ParseFloat(avg10Tmp, 64)
+	return nil
+}
+
+func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
+	s := r.CStats[containerName]
+
+	totalTmp := strings.TrimPrefix(txt[12], "total=")
+	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
+	total, err := strconv.ParseUint(totalTmp, 10, 64)
 	if err != nil {
 		return err
 	}
-	s.Mem.AVG10 = avg10
 
-	avg60Tmp := strings.TrimPrefix(txt[2], "avg60=")
-	avg60, err := strconv.ParseFloat(avg60Tmp, 64)
-	if err != nil {
-		return err
-	}
-	s.Mem.AVG60 = avg60
-
-	avg300Tmp := strings.TrimPrefix(txt[3], "avg300=")
-	avg300, err := strconv.ParseFloat(avg300Tmp, 64)
-	if err != nil {
-		return err
-	}
-	s.Mem.AVG300 = avg300
-
-	r.L.Printf("container=%s limit=%d memory_pressure_avg10=%.2f memory_pressure_avg60=%.2f memory_pressure_avg300=%.2f time_to_dec=%d total=%d delta=%d integral=%d",
-		containerName, s.Mem.Limit,
-		avg10, avg60, avg300,
-		s.Mem.GraceTicks, total, delta, s.Mem.Integral)
+	delta := total - s.Cpu.PrevTotal
+	s.Cpu.PrevTotal = total
+	s.Cpu.Integral += delta
 
 	return nil
 }
