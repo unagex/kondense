@@ -192,7 +192,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 	newMemory = min(max(newMemory, r.CStats[containerName].Mem.Min), r.CStats[containerName].Mem.Max)
 
 	newCPU := uint64(float64(r.CStats[containerName].Cpu.Limit) * (1 + cpuFactor))
-	newCPU = min(max(newCPU, r.CStats[containerName].Cpu.Min), r.CStats[containerName].Mem.Max)
+	newCPU = min(max(newCPU, r.CStats[containerName].Cpu.Min), r.CStats[containerName].Cpu.Max)
 
 	body := []byte(fmt.Sprintf(
 		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu": "%dm"},"requests":{"memory": "%d", "cpu": "%dm"}}}]}}`,
@@ -237,6 +237,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		containerName, memFactor, newMemory, cpuFactor, newCPU)
 
 	r.CStats[containerName].Mem.Integral = 0
+	r.CStats[containerName].Cpu.Integral = 0
 
 	return nil
 }
