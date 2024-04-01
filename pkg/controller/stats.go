@@ -18,7 +18,7 @@ const (
 const (
 	DefaultCPUInterval uint64 = 1
 	// DefaultCPUTargetPressure in nanoseconds
-	DefaultCPUTargetPressure uint64  = 10_000_000
+	DefaultCPUTargetPressure uint64  = 100_000
 	DefaultCPUMaxInc         float64 = 0.5
 	DefaultCPUMaxDec         float64 = 0.02
 	DefaultCPUCoeffInc       float64 = 20

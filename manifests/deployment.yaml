@@ -28,6 +28,8 @@ spec:
             cpu: 0.3
             memory: 50M
         env:
+        - name: EXCLUDE
+          value: "kondense"
         # - name: STRESS-NG_MEMORY_INTERVAL
         #   value: "10"
         # - name: STRESS-NG_MEMORY_MAX_DEC
