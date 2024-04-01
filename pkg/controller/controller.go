@@ -33,7 +33,6 @@ func (r *Reconciler) Reconcile() {
 		time.Sleep(1 * time.Second)
 
 		pod, err := r.Client.CoreV1().Pods(r.Namespace).Get(context.TODO(), r.Name, v1.GetOptions{})
-		//  Get(context.TODO(), types.NamespacedName{Namespace: r.Namespace, Name: r.Name}, pod)
 		if err != nil {
 			r.L.Println(err)
 			continue
