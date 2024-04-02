@@ -2,7 +2,7 @@ package controller
 
 const (
 	DefaultMemInterval uint64 = 10
-	// DefaultMemTargetPressure in bytes
+	// DefaultMemTargetPressure in microseconds
 	DefaultMemTargetPressure uint64  = 10_000
 	DefaultMemMaxInc         float64 = 0.5
 	DefaultMemMaxDec         float64 = 0.02
@@ -16,9 +16,9 @@ const (
 )
 
 const (
-	DefaultCPUInterval uint64 = 1
-	// DefaultCPUTargetPressure in nanoseconds
-	DefaultCPUTargetPressure uint64  = 100_000
+	DefaultCPUInterval uint64 = 6
+	// DefaultCPUTargetPressure in microseconds
+	DefaultCPUTargetPressure uint64  = 1_000_000
 	DefaultCPUMaxInc         float64 = 0.5
 	DefaultCPUMaxDec         float64 = 0.02
 	DefaultCPUCoeffInc       float64 = 20

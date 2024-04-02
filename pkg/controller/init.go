@@ -59,13 +59,13 @@ func (r *Reconciler) getMemoryMin(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d bytes.",
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
 				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
 		min := minQ.Value()
 		if min <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d bytes",
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
 				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
@@ -101,13 +101,13 @@ func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d bytes.",
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
 				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}
 		max := maxQ.Value()
 		if max <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d bytes",
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
 				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}

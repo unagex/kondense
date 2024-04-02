@@ -114,7 +114,7 @@ If we have a container named `nginx` in our pod, the variable name should be `NG
 | EXCLUDE | "" | Comma separated list of containers to not kondense. |
 | \<CONTAINER NAME>\_MEMORY_MIN | 50M | Minimum memory of the container. Kondense will never resize below that limit. |
 | \<CONTAINER NAME>\_MEMORY_MAX | 100G | Maximum memory of the container. Kondense will never resize above that limit. |
-| \<CONTAINER NAME>\_MEMORY_TARGET_PRESSURE | 10000 | Target memory pressure. Kondense will take corrective actions to obtain it. |
+| \<CONTAINER NAME>\_MEMORY_TARGET_PRESSURE | 10000 | Target memory pressure in microseconds. Kondense will take corrective actions to obtain it. |
 | \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
 | \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
 | \<CONTAINER NAME>\_MEMORY_MAX_INC | 0.5 | Maximum memory increase for one correction. e.g. 0.5 is a 50% increase. |
