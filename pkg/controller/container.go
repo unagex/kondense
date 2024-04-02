@@ -135,7 +135,6 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 		adj = min(adj*s.Mem.MaxInc, s.Mem.MaxInc)
 
 		s.Mem.GraceTicks = s.Mem.Interval - 1
-		// return r.Adjust(container.Name, adj)
 		return adj
 	}
 
@@ -143,7 +142,6 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 	if s.Mem.GraceTicks > 0 {
 		s.Mem.GraceTicks -= 1
 		return 0
-		// return nil
 	}
 
 	// tighten the limit.
@@ -152,8 +150,6 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 	adj = min(adj*s.Mem.MaxDec, s.Mem.MaxDec)
 
 	s.Mem.GraceTicks = s.Mem.Interval - 1
-
-	// return r.Adjust(container.Name, -adj)
 	return -adj
 }
 
