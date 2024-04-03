@@ -229,7 +229,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
 			http.StatusOK, resp.StatusCode)
 	}
-	r.L.Printf("patched container %s with mem factor: %.2f and new memory: %d bytes and with cpu factor : %.2f and new cpu: %d.",
+	r.L.Printf("patched container %s with mem factor: %.2f and new memory: %d bytes and with cpu factor : %.2f and new cpu: %dm.",
 		containerName, memFactor, newMemory, cpuFactor, newCPU)
 
 	r.CStats[containerName].Mem.Integral = 0
