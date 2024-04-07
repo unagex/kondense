@@ -176,8 +176,13 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 }
 
 func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
-	// TODO: fill func
-	return 0
+	s := r.CStats[container.Name]
+
+	// TODO: add a parameter for the 1.25
+	newLimit := float64(s.Cpu.Avg) * 1.25
+	adj := newLimit/float64(s.Cpu.Limit) - 1
+
+	return adj
 }
 
 func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
