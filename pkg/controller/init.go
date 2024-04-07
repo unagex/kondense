@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
@@ -34,8 +33,9 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 					CoeffDec:       r.getMemoryCoeffDec(containerStatus.Name),
 				},
 				Cpu: CPU{
-					Min: r.getCPUMin(containerStatus.Name),
-					Max: r.getCPUMax(containerStatus.Name),
+					Min:      r.getCPUMin(containerStatus.Name),
+					Max:      r.getCPUMax(containerStatus.Name),
+					Interval: r.getCPUInterval(containerStatus.Name),
 				},
 			}
 		}
@@ -46,8 +46,9 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 		r.CStats[containerStatus.Name].Mem.Limit = mem
 		r.CStats[containerStatus.Name].Cpu.Limit = int64(cpu * 1000)
 
-		if r.CStats[containerStatus.Name].Cpu.PrevUpdate.IsZero() {
-			r.CStats[containerStatus.Name].Cpu.PrevUpdate = time.Now()
+		if r.CStats[containerStatus.Name].Cpu.Usage == nil {
+			// Init queue of capacity Interval
+			r.CStats[containerStatus.Name].Cpu.Usage = make([]CPUProbe, 0, r.CStats[containerStatus.Name].Cpu.Interval)
 		}
 	}
 }
@@ -136,12 +137,27 @@ func (r *Reconciler) getCPUMax(containerName string) uint64 {
 	return DefaultCPUMax
 }
 
+func (r *Reconciler) getCPUInterval(containerName string) uint64 {
+	env := fmt.Sprintf("%s_CPU_INTERVAL", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		interval, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
+				env, env, DefaultCPUInterval)
+			return DefaultCPUInterval
+		}
+		return interval
+	}
+
+	return DefaultCPUInterval
+}
+
 func (r *Reconciler) getMemoryInterval(containerName string) uint64 {
 	env := fmt.Sprintf("%s_MEMORY_INTERVAL", strings.ToUpper(containerName))
 	if v, ok := os.LookupEnv(env); ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d.",
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
 				env, env, DefaultMemInterval)
 			return DefaultMemInterval
 		}

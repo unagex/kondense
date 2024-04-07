@@ -19,12 +19,6 @@ const (
 
 const (
 	DefaultCPUInterval uint64 = 6
-	// DefaultCPUTargetPressure in microseconds
-	DefaultCPUTargetPressure uint64  = 1_000_000
-	DefaultCPUMaxInc         float64 = 0.5
-	DefaultCPUMaxDec         float64 = 0.02
-	DefaultCPUCoeffInc       float64 = 20
-	DefaultCPUCoeffDec       float64 = 10
 
 	// DefaultCPUMin in milliCPU, 10 is 0.01 cpu.
 	DefaultCPUMin uint64 = 10
@@ -66,7 +60,12 @@ type CPU struct {
 	Min   uint64
 	Max   uint64
 
-	Usage10    uint64
-	PrevTotal  uint64
-	PrevUpdate time.Time
+	Interval uint64
+	// Usage is a queue of capacity Interval.
+	Usage []CPUProbe
+}
+
+type CPUProbe struct {
+	Usage uint64
+	T     time.Time
 }

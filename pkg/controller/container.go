@@ -72,10 +72,10 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	}
 
 	// s := r.CStats[container.Name]
-	// r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d cpu_time_to_dec=%d cpu_total=%d, cpu_integral=%d",
+	// r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d, cpu_usage10=%d",
 	// 	container.Name,
 	// 	s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
-	// 	s.Cpu.Limit, s.Cpu.GraceTicks, s.Cpu.PrevTotal, s.Cpu.Integral,
+	// 	s.Cpu.Limit, s.Cpu.Usage10,
 	// )
 
 	return nil
@@ -107,25 +107,30 @@ func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
 		return err
 	}
 
-	t := s.LastUpdate.Sub(s.Cpu.PrevUpdate)
-	r.L.Println(t)
-	if t < time.Second*10 {
+	if len(s.Cpu.Usage) == int(s.Cpu.Interval) {
+		// Pop oldest probe if Usage is full
+		s.Cpu.Usage = s.Cpu.Usage[1:]
+	}
+
+	p := CPUProbe{
+		Usage: total,
+		T:     s.LastUpdate,
+	}
+	s.Cpu.Usage = append(s.Cpu.Usage, p)
+
+	// We can calculate when we have 2 or more probes
+	if len(s.Cpu.Usage) == 1 {
 		return nil
 	}
 
-	delta := total - s.Cpu.PrevTotal
+	oldestProbe := s.Cpu.Usage[0]
+	newestProbe := s.Cpu.Usage[len(s.Cpu.Usage)-1]
 
-	// t is good
+	delta := newestProbe.Usage - oldestProbe.Usage
+	t := newestProbe.T.Sub(oldestProbe.T)
 
 	res := float64(delta) / float64(t.Microseconds())
-
-	r.L.Println(total)
-	r.L.Println(s.Cpu.PrevTotal)
-	r.L.Println(delta)
 	r.L.Println(res)
-
-	s.Cpu.PrevUpdate = s.LastUpdate
-	s.Cpu.PrevTotal = total
 
 	return nil
 }
