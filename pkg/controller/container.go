@@ -71,12 +71,12 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 		return err
 	}
 
-	// s := r.CStats[container.Name]
-	// r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d, cpu_usage10=%d",
-	// 	container.Name,
-	// 	s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
-	// 	s.Cpu.Limit, s.Cpu.Usage10,
-	// )
+	s := r.CStats[container.Name]
+	r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%dm, cpu_average=%dm",
+		container.Name,
+		s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
+		s.Cpu.Limit, s.Cpu.Avg,
+	)
 
 	return nil
 }
@@ -129,8 +129,9 @@ func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
 	delta := newestProbe.Usage - oldestProbe.Usage
 	t := newestProbe.T.Sub(oldestProbe.T)
 
-	res := float64(delta) / float64(t.Microseconds())
-	r.L.Println(res)
+	avgCPU := float64(delta) / float64(t.Microseconds())
+	avgMCPU := uint64(avgCPU * 1000)
+	s.Cpu.Avg = avgMCPU
 
 	return nil
 }

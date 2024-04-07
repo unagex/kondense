@@ -63,6 +63,9 @@ type CPU struct {
 	Interval uint64
 	// Usage is a queue of capacity Interval.
 	Usage []CPUProbe
+
+	// Avg in mCPU
+	Avg uint64
 }
 
 type CPUProbe struct {
