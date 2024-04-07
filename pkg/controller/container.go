@@ -40,13 +40,14 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	var err error
 	var output []byte
 	for i := 0; i < 3; i++ {
-		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.pressure")
+		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
 		// we don't need kubectl for kondense container.
 		if strings.ToLower(container.Name) == "kondense" {
-			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.pressure")
+			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
 		}
 		output, err = cmd.Output()
 		if err == nil {
+			r.CStats[container.Name].LastUpdate = time.Now()
 			break
 		}
 		time.Sleep(50 * time.Millisecond)
@@ -56,8 +57,8 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	}
 
 	txt := strings.Split(string(output), " ")
-	if len(txt) != 17 {
-		return fmt.Errorf("error got unexpected pressure stats for container %s: %s", container.Name, txt)
+	if len(txt) != 15 {
+		return fmt.Errorf("error got unexpected stats for container %s: %s", container.Name, txt)
 	}
 
 	err = r.UpdateMemStats(container.Name, txt)
@@ -70,12 +71,12 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 		return err
 	}
 
-	s := r.CStats[container.Name]
-	r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d cpu_time_to_dec=%d cpu_total=%d, cpu_integral=%d",
-		container.Name,
-		s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
-		s.Cpu.Limit, s.Cpu.GraceTicks, s.Cpu.PrevTotal, s.Cpu.Integral,
-	)
+	// s := r.CStats[container.Name]
+	// r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%d cpu_time_to_dec=%d cpu_total=%d, cpu_integral=%d",
+	// 	container.Name,
+	// 	s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
+	// 	s.Cpu.Limit, s.Cpu.GraceTicks, s.Cpu.PrevTotal, s.Cpu.Integral,
+	// )
 
 	return nil
 }
@@ -100,16 +101,31 @@ func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {
 func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
 	s := r.CStats[containerName]
 
-	totalTmp := strings.TrimPrefix(txt[12], "total=")
-	totalTmp = strings.TrimSuffix(totalTmp, "\nfull")
+	totalTmp := strings.TrimSuffix(txt[9], "\nuser_usec")
 	total, err := strconv.ParseUint(totalTmp, 10, 64)
 	if err != nil {
 		return err
 	}
 
+	t := s.LastUpdate.Sub(s.Cpu.PrevUpdate)
+	r.L.Println(t)
+	if t < time.Second*10 {
+		return nil
+	}
+
 	delta := total - s.Cpu.PrevTotal
+
+	// t is good
+
+	res := float64(delta) / float64(t.Microseconds())
+
+	r.L.Println(total)
+	r.L.Println(s.Cpu.PrevTotal)
+	r.L.Println(delta)
+	r.L.Println(res)
+
+	s.Cpu.PrevUpdate = s.LastUpdate
 	s.Cpu.PrevTotal = total
-	s.Cpu.Integral += delta
 
 	return nil
 }
@@ -154,31 +170,8 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 }
 
 func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
-	s := r.CStats[container.Name]
-
-	if s.Cpu.Integral > s.Cpu.TargetPressure {
-		// Increase exponentially as we deviate from the target pressure.
-		diff := s.Cpu.Integral / s.Cpu.TargetPressure
-		adj := math.Pow(float64(diff)/DefaultCPUCoeffInc, 2)
-		adj = min(adj*s.Cpu.MaxInc, s.Cpu.MaxInc)
-
-		s.Cpu.GraceTicks = s.Cpu.Interval - 1
-		return adj
-	}
-
-	// tighten the limit when grace ticks goes to 0.
-	if s.Cpu.GraceTicks > 0 {
-		s.Cpu.GraceTicks -= 1
-		return 0
-	}
-
-	// tighten the limit.
-	diff := s.Cpu.TargetPressure / max(s.Cpu.Integral, 1)
-	adj := math.Pow(float64(diff)/s.Cpu.CoeffDec, 2)
-	adj = min(adj*s.Cpu.MaxDec, s.Cpu.MaxDec)
-
-	s.Cpu.GraceTicks = s.Cpu.Interval - 1
-	return -adj
+	// TODO: fill func
+	return 0
 }
 
 func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
@@ -233,7 +226,6 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		containerName, memFactor, newMemory, cpuFactor, newCPU)
 
 	r.CStats[containerName].Mem.Integral = 0
-	r.CStats[containerName].Cpu.Integral = 0
 
 	return nil
 }

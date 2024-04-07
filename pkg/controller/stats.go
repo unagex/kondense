@@ -1,5 +1,7 @@
 package controller
 
+import "time"
+
 const (
 	DefaultMemInterval uint64 = 10
 	// DefaultMemTargetPressure in microseconds
@@ -36,6 +38,8 @@ type ContainerStats map[string]*Stats
 type Stats struct {
 	Mem Memory
 	Cpu CPU
+
+	LastUpdate time.Time
 }
 
 type Memory struct {
@@ -58,20 +62,11 @@ type Memory struct {
 }
 
 type CPU struct {
-	Limit     int64
-	PrevTotal uint64
-	Integral  uint64
+	Limit int64
+	Min   uint64
+	Max   uint64
 
-	TargetPressure uint64
-
-	MaxInc   float64
-	MaxDec   float64
-	CoeffInc float64
-	CoeffDec float64
-
-	Min uint64
-	Max uint64
-
-	GraceTicks uint64
-	Interval   uint64
+	Usage10    uint64
+	PrevTotal  uint64
+	PrevUpdate time.Time
 }
