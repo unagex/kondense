@@ -178,21 +178,28 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
 	s := r.CStats[container.Name]
 
-	// TODO: add a parameter for the 1.25
-	newLimit := float64(s.Cpu.Avg) * 1.25
+	// TODO: add a parameter for the 1 / 0.8
+	newLimit := float64(s.Cpu.Avg) * 1 / 0.8
 	adj := newLimit/float64(s.Cpu.Limit) - 1
 
 	return adj
 }
 
 func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
+	s := r.CStats[containerName]
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
-	newMemory := uint64(float64(r.CStats[containerName].Mem.Limit) * (1 + memFactor))
-	newMemory = min(max(newMemory, r.CStats[containerName].Mem.Min), r.CStats[containerName].Mem.Max)
+	newMemory := uint64(float64(s.Mem.Limit) * (1 + memFactor))
+	newMemory = min(max(newMemory, s.Mem.Min), s.Mem.Max)
 
-	newCPU := uint64(float64(r.CStats[containerName].Cpu.Limit) * (1 + cpuFactor))
-	newCPU = min(max(newCPU, r.CStats[containerName].Cpu.Min), r.CStats[containerName].Cpu.Max)
+	newCPU := uint64(float64(s.Cpu.Limit) * (1 + cpuFactor))
+	newCPU = min(max(newCPU, s.Cpu.Min), s.Cpu.Max)
+
+	MemWillChange := newMemory != uint64(s.Mem.Limit)
+	CPUwillChange := newCPU == uint64(s.Cpu.Limit)
+	if MemWillChange && CPUwillChange {
+		return nil
+	}
 
 	body := []byte(fmt.Sprintf(
 		`{"spec": {"containers":[{"name":"%s", "resources":{"limits":{"memory": "%d", "cpu": "%dm"},"requests":{"memory": "%d", "cpu": "%dm"}}}]}}`,
@@ -236,7 +243,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 	r.L.Printf("patched container %s with mem factor: %.2f and new memory: %d bytes and with cpu factor : %.2f and new cpu: %dm.",
 		containerName, memFactor, newMemory, cpuFactor, newCPU)
 
-	r.CStats[containerName].Mem.Integral = 0
+	s.Mem.Integral = 0
 
 	return nil
 }
