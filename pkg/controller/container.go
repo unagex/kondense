@@ -195,9 +195,9 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 	newCPU := uint64(float64(s.Cpu.Limit) * (1 + cpuFactor))
 	newCPU = min(max(newCPU, s.Cpu.Min), s.Cpu.Max)
 
-	MemWillChange := newMemory != uint64(s.Mem.Limit)
-	CPUwillChange := newCPU == uint64(s.Cpu.Limit)
-	if MemWillChange && CPUwillChange {
+	MemUpdate := newMemory != uint64(s.Mem.Limit)
+	CPUUpdate := newCPU != uint64(s.Cpu.Limit)
+	if !MemUpdate && !CPUUpdate {
 		return nil
 	}
 
