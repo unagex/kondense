@@ -83,7 +83,7 @@ func (r *Reconciler) getCPUMin(containerName string) uint64 {
 				env, env, DefaultCPUMin)
 			return DefaultCPUMin
 		}
-		min := minQ.Value()
+		min := minQ.MilliValue()
 		if min <= 0 {
 			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMin)
@@ -125,7 +125,7 @@ func (r *Reconciler) getCPUMax(containerName string) uint64 {
 				env, env, DefaultCPUMax)
 			return DefaultCPUMax
 		}
-		max := maxQ.Value()
+		max := maxQ.MilliValue()
 		if max <= 0 {
 			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMax)
