@@ -10,11 +10,11 @@ import (
 )
 
 func main() {
-	// create logger
+	// create logger.
 	l := log.Default()
 	l.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	// get pod name and namespace
+	// get pod name and namespace.
 	name := os.Getenv("HOSTNAME")
 	namespaceByte, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
