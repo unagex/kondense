@@ -33,12 +33,13 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 					CoeffDec:       r.getMemoryCoeffDec(containerStatus.Name),
 				},
 				Cpu: CPU{
-					Min:      r.getCPUMin(containerStatus.Name),
-					Max:      r.getCPUMax(containerStatus.Name),
-					Interval: r.getCPUInterval(containerStatus.Name),
-					MaxInc:   r.getCPUMaxInc(containerStatus.Name),
-					MaxDec:   r.getCPUMaxDec(containerStatus.Name),
-					Coeff:    r.getCPUCoeff(containerStatus.Name),
+					Min:       r.getCPUMin(containerStatus.Name),
+					Max:       r.getCPUMax(containerStatus.Name),
+					Interval:  r.getCPUInterval(containerStatus.Name),
+					TargetAvg: r.getCPUTargetAvg(containerStatus.Name),
+					MaxInc:    r.getCPUMaxInc(containerStatus.Name),
+					MaxDec:    r.getCPUMaxDec(containerStatus.Name),
+					Coeff:     r.getCPUCoeff(containerStatus.Name),
 				},
 			}
 		}
@@ -268,6 +269,26 @@ func (r *Reconciler) getCPUInterval(containerName string) uint64 {
 	}
 
 	return DefaultCPUInterval
+}
+
+func (r *Reconciler) getCPUTargetAvg(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_TARGET_AVG", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		target, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUTargetAvg)
+			return DefaultCPUTargetAvg
+		}
+		if target <= 0 || target > 1 {
+			r.L.Printf("error environment variable :%s should be between 0 and 1. Set %s to default value: %.2f.",
+				env, env, DefaultCPUTargetAvg)
+			return DefaultCPUTargetAvg
+		}
+		return target
+	}
+
+	return DefaultCPUTargetAvg
 }
 
 func (r *Reconciler) getCPUCoeff(containerName string) uint64 {

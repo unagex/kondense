@@ -18,10 +18,11 @@ const (
 )
 
 const (
-	DefaultCPUInterval uint64  = 6
-	DefaultCPUCoeff    uint64  = 6
-	DefaultCPUMaxInc   float64 = 0.5
-	DefaultCPUMaxDec   float64 = 0.1
+	DefaultCPUInterval  uint64  = 6
+	DefaultCPUTargetAvg float64 = 0.8
+	DefaultCPUCoeff     uint64  = 6
+	DefaultCPUMaxInc    float64 = 0.5
+	DefaultCPUMaxDec    float64 = 0.1
 
 	// DefaultCPUMin in milliCPU, 10 is 0.01 cpu.
 	DefaultCPUMin uint64 = 10
@@ -61,6 +62,9 @@ type CPU struct {
 	Limit int64
 	Min   uint64
 	Max   uint64
+
+	// TargetAvg is from 0 to 1. e.g. 0.8 means a target cpu usage of 80%.
+	TargetAvg float64
 
 	MaxInc float64
 	MaxDec float64

@@ -178,8 +178,7 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
 	s := r.CStats[container.Name]
 
-	// TODO: add a parameter TARGET for the 1 / 0.8
-	newLimit := float64(s.Cpu.Avg) * 1 / 0.8
+	newLimit := float64(s.Cpu.Avg) / s.Cpu.TargetAvg
 	adj := newLimit/float64(s.Cpu.Limit) - 1
 
 	if adj > 0 {
