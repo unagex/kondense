@@ -36,6 +36,8 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 					Min:      r.getCPUMin(containerStatus.Name),
 					Max:      r.getCPUMax(containerStatus.Name),
 					Interval: r.getCPUInterval(containerStatus.Name),
+					MaxInc:   r.getCPUMaxInc(containerStatus.Name),
+					MaxDec:   r.getCPUMaxDec(containerStatus.Name),
 					Coeff:    r.getCPUCoeff(containerStatus.Name),
 				},
 			}
@@ -281,4 +283,44 @@ func (r *Reconciler) getCPUCoeff(containerName string) uint64 {
 	}
 
 	return DefaultCPUCoeff
+}
+
+func (r *Reconciler) getCPUMaxInc(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX_INC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		maxInc, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxInc)
+			return DefaultCPUMaxInc
+		}
+		if maxInc <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxInc)
+			return DefaultCPUMaxInc
+		}
+		return maxInc
+	}
+
+	return DefaultCPUMaxInc
+}
+
+func (r *Reconciler) getCPUMaxDec(containerName string) float64 {
+	env := fmt.Sprintf("%s_CPU_MAX_DEC", strings.ToUpper(containerName))
+	if v, ok := os.LookupEnv(env); ok {
+		maxDec, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxDec)
+			return DefaultCPUMaxDec
+		}
+		if maxDec <= 0 {
+			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+				env, env, DefaultCPUMaxDec)
+			return DefaultCPUMaxDec
+		}
+		return maxDec
+	}
+
+	return DefaultCPUMaxDec
 }

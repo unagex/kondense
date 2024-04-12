@@ -18,8 +18,10 @@ const (
 )
 
 const (
-	DefaultCPUInterval uint64 = 6
-	DefaultCPUCoeff    uint64 = 6
+	DefaultCPUInterval uint64  = 6
+	DefaultCPUCoeff    uint64  = 6
+	DefaultCPUMaxInc   float64 = 0.5
+	DefaultCPUMaxDec   float64 = 0.1
 
 	// DefaultCPUMin in milliCPU, 10 is 0.01 cpu.
 	DefaultCPUMin uint64 = 10
@@ -60,7 +62,9 @@ type CPU struct {
 	Min   uint64
 	Max   uint64
 
-	Coeff uint64
+	MaxInc float64
+	MaxDec float64
+	Coeff  uint64
 
 	Interval uint64
 	// Usage is a queue of capacity Interval.

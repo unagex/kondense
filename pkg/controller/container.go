@@ -183,10 +183,11 @@ func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
 	adj := newLimit/float64(s.Cpu.Limit) - 1
 
 	if adj > 0 {
-		return adj + math.Pow(float64(s.Cpu.Coeff)*adj, 2)
+		adj = adj + math.Pow(float64(s.Cpu.Coeff)*adj, 2)
+		return min(adj, s.Cpu.MaxInc)
 	}
 
-	return adj
+	return max(adj, -s.Cpu.MaxDec)
 }
 
 func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
