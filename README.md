@@ -1,8 +1,8 @@
 # Kondense
 
-
 ![Go version](https://img.shields.io/github/go-mod/go-version/unagex/kondense)
 [![Go Report Card](https://goreportcard.com/badge/github.com/unagex/kondense)](https://goreportcard.com/report/github.com/unagex/kondense)
+[![GitHub release](https://img.shields.io/github/v/tag/unagex/kondense.svg?label=release&color=lightgrey)](https://github.com/unagex/kondense/releases)
 
 <img src="./logo.png" alt="drawing" width="150"/>
 
