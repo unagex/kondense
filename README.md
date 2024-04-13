@@ -9,11 +9,9 @@
 Kondense is an automated memory sizing tool. It runs as a sidecar in kubernetes pods.
 
 ## Background
-Kondense uses real-time memory pressure to determine the optimal memory for each containers in a pod.
+Kondense uses memory pressure to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
 Allocated memory is not a good proxy for required memory. Many libraries used during startup are loaded into memory only to be never touched again afterwards. 
-
-Kondense uses the memory pressure given by the Linux Kernel to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
 ## Requirements
 
