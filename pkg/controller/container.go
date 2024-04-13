@@ -39,35 +39,23 @@ func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contai
 func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
 	var err error
 	var output []byte
-	for i := 0; i < 3; i++ {
-		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
-		// we don't need kubectl for kondense container.
-		if strings.ToLower(container.Name) == "kondense" {
-			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
-		}
-		output, err = cmd.Output()
-		if err == nil {
-			r.CStats[container.Name].LastUpdate = time.Now()
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+
+	output, err = r.executeStatsCmd(container)
 	if err != nil {
 		return err
 	}
+	r.CStats[container.Name].LastUpdate = time.Now()
 
 	txt := strings.Split(string(output), " ")
-	if len(txt) != 15 {
+	if len(txt) != 15 { // TODO use regexp
 		return fmt.Errorf("error got unexpected stats for container %s: %s", container.Name, txt)
 	}
 
-	err = r.UpdateMemStats(container.Name, txt)
-	if err != nil {
+	if err := r.UpdateMemStats(container.Name, txt); err != nil {
 		return err
 	}
 
-	err = r.UpdateCPUStats(container.Name, txt)
-	if err != nil {
+	if err := r.UpdateCPUStats(container.Name, txt); err != nil {
 		return err
 	}
 
@@ -79,6 +67,27 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	)
 
 	return nil
+}
+
+func (r *Reconciler) executeStatsCmd(container corev1.Container) ([]byte, error) {
+	var cmd *exec.Cmd
+	var err error
+	var output []byte
+	retryNb := 3
+
+	if strings.ToLower(container.Name) == "kondense" {
+		cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
+	} else {
+		cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
+	}
+	for i := 0; i < retryNb; i++ {
+		output, err = cmd.Output()
+		if err == nil {
+			return output, nil
+		}
+		time.Sleep(50 * time.Millisecond * time.Duration(i+1))
+	}
+	return nil, err
 }
 
 func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {
@@ -199,9 +208,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 	newCPU := uint64(float64(s.Cpu.Limit) * (1 + cpuFactor))
 	newCPU = min(max(newCPU, s.Cpu.Min), s.Cpu.Max)
 
-	MemUpdate := newMemory != uint64(s.Mem.Limit)
-	CPUUpdate := newCPU != uint64(s.Cpu.Limit)
-	if !MemUpdate && !CPUUpdate {
+	if newMemory == uint64(s.Mem.Limit) && newCPU == uint64(s.Cpu.Limit) {
 		return nil
 	}
 
@@ -241,8 +248,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		return r.Adjust(containerName, memFactor, cpuFactor)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
-			http.StatusOK, resp.StatusCode)
+		return fmt.Errorf("error %d: failed to patch container", resp.StatusCode)
 	}
 	r.L.Info().Str("container", containerName).Float64("memFactor", memFactor).Uint64("newMemory", newMemory).Float64("cpuFactor", cpuFactor).Uint64("newCPU", newCPU).Msg("patched container")
 
