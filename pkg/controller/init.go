@@ -276,12 +276,12 @@ func (r *Reconciler) getCPUTargetAvg(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		target, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultCPUTargetAvg)
 			return DefaultCPUTargetAvg
 		}
 		if target <= 0 || target > 1 {
-			r.L.Printf("error environment variable :%s should be between 0 and 1. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable :%s should be between 0 and 1. Set %s to default value: %.2f.",
 				env, env, DefaultCPUTargetAvg)
 			return DefaultCPUTargetAvg
 		}
@@ -311,12 +311,12 @@ func (r *Reconciler) getCPUMaxInc(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultCPUMaxInc)
 			return DefaultCPUMaxInc
 		}
 		if maxInc <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
 				env, env, DefaultCPUMaxInc)
 			return DefaultCPUMaxInc
 		}
@@ -331,12 +331,12 @@ func (r *Reconciler) getCPUMaxDec(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxDec, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultCPUMaxDec)
 			return DefaultCPUMaxDec
 		}
 		if maxDec <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
 				env, env, DefaultCPUMaxDec)
 			return DefaultCPUMaxDec
 		}
