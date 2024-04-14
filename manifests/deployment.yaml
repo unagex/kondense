@@ -19,22 +19,14 @@ spec:
         command: [ "sleep", "1d" ]
         resources:
           limits:
-            cpu: 100m
+            cpu: 0.1
             memory: 100M
       - name: kondense
         image: kondense/kondense:1.0.1
         resources:
           limits:
-            cpu: 0.3
+            cpu: 0.1
             memory: 50M
         # env:
-        # - name: EXCLUDE
-        #   value: "stress-ng"
-        # - name: STRESS-NG_MEMORY_INTERVAL
-        #   value: "10"
-        # - name: STRESS-NG_MEMORY_MAX_DEC
-        #   value: "0.03"
-        # - name: KONDENSE_MEMORY_INTERVAL
-        #   value: "1"
-        # - name: KONDENSE_MEMORY_MAX_DEC
-        #   value: "0.03"
+        # - name: STRESS-NG_CPU_MIN
+        #   value: "1000m"
