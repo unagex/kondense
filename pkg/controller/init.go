@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -62,13 +63,13 @@ func (r *Reconciler) getMemoryMin(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
 				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
 		min := minQ.Value()
 		if min <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
 				env, env, DefaultMemMin)
 			return DefaultMemMin
 		}
@@ -83,19 +84,18 @@ func (r *Reconciler) getMemoryMax(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %d microseconds.",
 				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}
 		max := maxQ.Value()
 		if max <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %d microseconds",
 				env, env, DefaultMemMax)
 			return DefaultMemMax
 		}
 		return uint64(max)
 	}
-
 	return DefaultMemMax
 }
 
@@ -104,7 +104,7 @@ func (r *Reconciler) getMemoryInterval(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
 				env, env, DefaultMemInterval)
 			return DefaultMemInterval
 		}
@@ -119,12 +119,12 @@ func (r *Reconciler) getMemoryTargetPressure(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		targetPressure, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s pressure. Set %s to default value: %d.",
+			log.Error().Msgf("error cannot parse environment variable: %s pressure. Set %s to default value: %d.",
 				env, env, DefaultMemTargetPressure)
 			return DefaultMemTargetPressure
 		}
 		if targetPressure == 0 {
-			r.L.Printf("error environment variable: %s should be more than 0. Set %s to default value: %d.",
+			log.Error().Msgf("error environment variable: %s should be more than 0. Set %s to default value: %d.",
 				env, env, DefaultMemTargetPressure)
 			return DefaultMemTargetPressure
 		}
@@ -139,12 +139,12 @@ func (r *Reconciler) getMemoryMaxInc(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultMemMaxInc)
 			return DefaultMemMaxInc
 		}
 		if maxInc <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
 				env, env, DefaultMemMaxInc)
 			return DefaultMemMaxInc
 		}
@@ -159,12 +159,12 @@ func (r *Reconciler) getMemoryMaxDec(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxDec, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultMemMaxDec)
 			return DefaultMemMaxDec
 		}
 		if maxDec <= 0 || maxDec >= 1 {
-			r.L.Printf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be between 0 and 1 exclusive. Set %s to default value: %.2f.",
 				env, env, DefaultMemMaxDec)
 			return DefaultMemMaxDec
 		}
@@ -179,12 +179,12 @@ func (r *Reconciler) getMemoryCoeffInc(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		coeffInc, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultMemCoeffInc)
 			return DefaultMemCoeffInc
 		}
 		if coeffInc <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
 				env, env, DefaultMemCoeffInc)
 			return DefaultMemCoeffInc
 		}
@@ -199,12 +199,12 @@ func (r *Reconciler) getMemoryCoeffDec(containerName string) float64 {
 	if v, ok := os.LookupEnv(env); ok {
 		coeffDec, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %.2f.",
 				env, env, DefaultMemCoeffDec)
 			return DefaultMemCoeffDec
 		}
 		if coeffDec <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %.2f.",
 				env, env, DefaultMemCoeffDec)
 			return DefaultMemCoeffDec
 		}
@@ -219,13 +219,13 @@ func (r *Reconciler) getCPUMin(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		minQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
 				env, env, DefaultCPUMin)
 			return DefaultCPUMin
 		}
 		min := minQ.MilliValue()
 		if min <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMin)
 			return DefaultCPUMin
 		}
@@ -240,13 +240,13 @@ func (r *Reconciler) getCPUMax(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		maxQ, err := resource.ParseQuantity(v)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %d milliCPU(s).",
 				env, env, DefaultCPUMax)
 			return DefaultCPUMax
 		}
 		max := maxQ.MilliValue()
 		if max <= 0 {
-			r.L.Printf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
+			log.Error().Msgf("error environment variable: %s should be bigger than 0. Set %s to default value: %d milliCPU(s)",
 				env, env, DefaultCPUMax)
 			return DefaultCPUMax
 		}
@@ -261,7 +261,7 @@ func (r *Reconciler) getCPUInterval(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		interval, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
 				env, env, DefaultCPUInterval)
 			return DefaultCPUInterval
 		}
@@ -296,7 +296,7 @@ func (r *Reconciler) getCPUCoeff(containerName string) uint64 {
 	if v, ok := os.LookupEnv(env); ok {
 		coeff, err := strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			r.L.Printf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
+			log.Error().Msgf("error cannot parse environment variable: %s. Set %s to default value: %ds.",
 				env, env, DefaultCPUCoeff)
 			return DefaultCPUCoeff
 		}

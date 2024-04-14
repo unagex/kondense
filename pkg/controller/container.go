@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -26,13 +27,13 @@ func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contai
 
 	err := r.UpdateStats(pod, container)
 	if err != nil {
-		r.L.Print(err)
+		log.Error().Err(err)
 		return
 	}
 
 	err = r.KondenseContainer(container)
 	if err != nil {
-		r.L.Print(err)
+		log.Error().Err(err)
 	}
 }
 
@@ -72,7 +73,7 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	}
 
 	s := r.CStats[container.Name]
-	r.L.Printf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%dm, cpu_average=%dm",
+	log.Info().Msgf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%dm, cpu_average=%dm",
 		container.Name,
 		s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
 		s.Cpu.Limit, s.Cpu.Avg,
@@ -230,11 +231,11 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		// renew k8s token
 		bt, err := utils.GetBearerToken()
 		if err != nil {
-			r.L.Fatalf("failed to renew k8s bearer token: %s", err)
+			log.Fatal().Msgf("failed to renew k8s bearer token: %s", err)
 		}
 
 		r.Mu.Lock()
-		r.L.Print("renewed k8s bearer token.")
+		log.Info().Msg("renewed k8s bearer token.")
 		r.BearerToken = bt
 		r.Mu.Unlock()
 
@@ -244,8 +245,7 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
 			http.StatusOK, resp.StatusCode)
 	}
-	r.L.Printf("patched container %s with mem factor: %.2f and new memory: %d bytes and with cpu factor : %.2f and new cpu: %dm.",
-		containerName, memFactor, newMemory, cpuFactor, newCPU)
+	log.Info().Str("container", containerName).Float64("memFactor", memFactor).Uint64("newMemory", newMemory).Float64("cpuFactor", cpuFactor).Uint64("newCPU", newCPU).Msg("patched container")
 
 	s.Mem.Integral = 0
 

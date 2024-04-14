@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
 	"os"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/unagex/kondense/pkg/controller"
 	"github.com/unagex/kondense/pkg/utils"
@@ -10,36 +11,31 @@ import (
 )
 
 func main() {
-	// create logger.
-	l := log.Default()
-	l.SetFlags(log.Lshortfile | log.LstdFlags)
-
 	// get pod name and namespace.
 	name := os.Getenv("HOSTNAME")
 	namespaceByte, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
-		l.Fatal(err)
+		log.Fatal().Err(err)
 	}
 	namespace := string(namespaceByte)
 
 	client, err := utils.GetClient()
 	if err != nil {
-		l.Fatal(err)
+		log.Fatal().Err(err)
 	}
 	rawClient, err := utils.GetRawClient()
 	if err != nil {
-		l.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	bt, err := utils.GetBearerToken()
 	if err != nil {
-		l.Fatalf("failed to get k8s bearer token: %s", err)
+		log.Fatal().Err(err).Msg("failed to get k8s bearer token")
 	}
 
 	reconciler := controller.Reconciler{
 		Client:    client,
 		RawClient: rawClient,
-		L:         l,
 
 		BearerToken: bt,
 

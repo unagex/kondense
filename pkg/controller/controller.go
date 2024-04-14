@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +15,6 @@ import (
 type Reconciler struct {
 	Client    *kubernetes.Clientset
 	RawClient *http.Client
-	L         *log.Logger
 
 	Mu          sync.Mutex
 	BearerToken string
@@ -34,11 +33,11 @@ func (r *Reconciler) Reconcile() {
 
 		pod, err := r.Client.CoreV1().Pods(r.Namespace).Get(context.TODO(), r.Name, v1.GetOptions{})
 		if err != nil {
-			r.L.Println(err)
+			log.Error().Err(err)
 			continue
 		}
 		if pod.Status.QOSClass != corev1.PodQOSGuaranteed {
-			r.L.Printf("error kondense is only allowed for pods with a QoS class of Guaranteed, got: %s.", pod.Status.QOSClass)
+			log.Error().Msgf("error kondense is only allowed for pods with a QoS class of Guaranteed, got: %s.", pod.Status.QOSClass)
 			continue
 		}
 
