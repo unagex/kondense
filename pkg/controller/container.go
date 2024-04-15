@@ -134,7 +134,7 @@ func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
 	delta := newestProbe.Usage - oldestProbe.Usage
 	t := newestProbe.T.Sub(oldestProbe.T)
 
-	avgCPU := float64(delta) / float64(t.Microseconds())
+	avgCPU := float64(delta) / max(1, float64(t.Microseconds()))
 	avgMCPU := uint64(avgCPU * 1000)
 	s.Cpu.Avg = avgMCPU
 
@@ -157,7 +157,7 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 
 	if s.Mem.Integral > s.Mem.TargetPressure {
 		// Increase exponentially as we deviate from the target pressure.
-		diff := s.Mem.Integral / s.Mem.TargetPressure
+		diff := s.Mem.Integral / max(1, s.Mem.TargetPressure)
 		adj := math.Pow(float64(diff)/DefaultMemCoeffInc, 2)
 		adj = min(adj*s.Mem.MaxInc, s.Mem.MaxInc)
 
@@ -183,7 +183,7 @@ func (r *Reconciler) KondenseMemory(container corev1.Container) float64 {
 func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
 	s := r.CStats[container.Name]
 
-	newLimit := float64(s.Cpu.Avg) / s.Cpu.TargetAvg
+	newLimit := float64(s.Cpu.Avg) / max(1, s.Cpu.TargetAvg)
 	adj := newLimit/float64(s.Cpu.Limit) - 1
 
 	if adj > 0 {
