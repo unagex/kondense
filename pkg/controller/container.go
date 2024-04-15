@@ -73,11 +73,15 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	}
 
 	s := r.CStats[container.Name]
-	log.Info().Msgf("container=%s memory_limit=%d memory_time_to_dec=%d memory_total=%d, memory_integral=%d, cpu_limit=%dm, cpu_average=%dm",
-		container.Name,
-		s.Mem.Limit, s.Mem.GraceTicks, s.Mem.PrevTotal, s.Mem.Integral,
-		s.Cpu.Limit, s.Cpu.Avg,
-	)
+	log.Info().
+		Str("container", container.Name).
+		Int64("memory limit", s.Mem.Limit).
+		Uint64("memory time to decrease", s.Mem.GraceTicks).
+		Uint64("memory total", s.Mem.PrevTotal).
+		Uint64("integral", s.Mem.Integral).
+		Int64("cpu limit", s.Cpu.Limit).
+		Uint64("cpu average", s.Cpu.Avg).
+		Msg("updated stats")
 
 	return nil
 }
