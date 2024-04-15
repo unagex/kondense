@@ -25,8 +25,5 @@ spec:
         image: kondense/kondense:1.0.1
         resources:
           limits:
-            cpu: 0.1
-            memory: 50M
-        # env:
-        # - name: STRESS-NG_CPU_MIN
-        #   value: "1000m"
+            cpu: 0.05
+            memory: 100M
