@@ -32,7 +32,6 @@ func (r *Reconciler) Reconcile() {
 	var loopTime time.Duration
 	for {
 		// one iteration should take 1 second.
-		log.Print(loopTime)
 		time.Sleep(time.Second - loopTime)
 		start = time.Now()
 

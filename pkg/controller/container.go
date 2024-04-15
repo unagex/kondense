@@ -75,12 +75,12 @@ func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) er
 	s := r.CStats[container.Name]
 	log.Info().
 		Str("container", container.Name).
-		Int64("memory limit", s.Mem.Limit).
-		Uint64("memory time to decrease", s.Mem.GraceTicks).
-		Uint64("memory total", s.Mem.PrevTotal).
+		Int64("memory_limit", s.Mem.Limit).
+		Uint64("memory_time to decrease", s.Mem.GraceTicks).
+		Uint64("memory_total", s.Mem.PrevTotal).
 		Uint64("integral", s.Mem.Integral).
-		Int64("cpu limit", s.Cpu.Limit).
-		Uint64("cpu average", s.Cpu.Avg).
+		Int64("cpu_limit", s.Cpu.Limit).
+		Uint64("cpu_average", s.Cpu.Avg).
 		Msg("updated stats")
 
 	return nil
@@ -254,10 +254,10 @@ func (r *Reconciler) Adjust(containerName string, memFactor, cpuFactor float64) 
 	cpuFactorLog, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", cpuFactor), 64)
 	log.Info().
 		Str("container", containerName).
-		Float64("memory factor", memFactorLog).
-		Uint64("new memory", newMemory).
-		Float64("cpu factor", cpuFactorLog).
-		Uint64("new cpu", newCPU).
+		Float64("memory_factor", memFactorLog).
+		Uint64("new_memory", newMemory).
+		Float64("cpu_factor", cpuFactorLog).
+		Uint64("new_cpu", newCPU).
 		Msg("patched container")
 
 	s.Mem.Integral = 0
