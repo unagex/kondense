@@ -50,6 +50,7 @@ func (r *Reconciler) Reconcile() {
 		var wg sync.WaitGroup
 		wg.Add(len(pod.Spec.Containers))
 
+
 		for _, container := range pod.Spec.Containers {
 			go r.ReconcileContainer(pod, container, &wg)
 		}

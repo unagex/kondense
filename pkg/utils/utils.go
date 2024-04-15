@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"slices"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 func ContainersToExclude() []string {
@@ -58,4 +61,13 @@ func GetBearerToken() (string, error) {
 	}
 
 	return "Bearer " + string(token), nil
+}
+
+func GetMonitorMode(kondenseContainer *corev1.Container, container *corev1.Container) (string) {
+	for _, envVar := range container.Env {
+		if envVar.Name == strings.ToUpper(container.Name) + "_MODE" {
+			return envVar.Value
+		}
+	}
+	return "all";
 }
