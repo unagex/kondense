@@ -17,7 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
+func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, kondenseContainer *corev1.Container, container corev1.Container, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	exclude := utils.ContainersToExclude()
@@ -25,7 +25,9 @@ func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contai
 		return
 	}
 
-	err := r.UpdateStats(pod, container)
+	mode = utils.GetMonitorMode(r.KondenseContainer(), &container)
+
+	err := r.UpdateStats(pod, container, mode)
 	if err != nil {
 		log.Error().Err(err)
 		return
@@ -37,53 +39,72 @@ func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Contai
 	}
 }
 
-func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
+func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container, mode string) error {
 	var err error
 	var output []byte
-	for i := 0; i < 3; i++ {
-		cmd := exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
-		// we don't need kubectl for kondense container.
-		if strings.ToLower(container.Name) == "kondense" {
-			cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
-		}
-		output, err = cmd.Output()
-		if err == nil {
-			r.CStats[container.Name].LastUpdate = time.Now()
-			break
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+
+	output, err = r.executeStatsCmd(container)
 	if err != nil {
 		return err
 	}
+
+	r.CStats[container.Name].LastUpdate = time.Now()
 
 	txt := strings.Split(string(output), " ")
 	if len(txt) != 15 {
 		return fmt.Errorf("error got unexpected stats for container %s: %s", container.Name, txt)
 	}
 
-	err = r.UpdateMemStats(container.Name, txt)
-	if err != nil {
-		return err
+	if mode == "memory" || mode == "all" {
+		err = r.UpdateMemStats(container.Name, txt)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = r.UpdateCPUStats(container.Name, txt)
-	if err != nil {
-		return err
+	if mode == "cpu" || mode == "all" {
+		err = r.UpdateCPUStats(container.Name, txt)
+		if err != nil {
+			return err
+		}
 	}
 
 	s := r.CStats[container.Name]
-	log.Info().
-		Str("container", container.Name).
-		Int64("memory_limit", s.Mem.Limit).
-		Uint64("memory_time to decrease", s.Mem.GraceTicks).
-		Uint64("memory_total", s.Mem.PrevTotal).
-		Uint64("integral", s.Mem.Integral).
-		Int64("cpu_limit", s.Cpu.Limit).
-		Uint64("cpu_average", s.Cpu.Avg).
-		Msg("updated stats")
 
+	logEvent := log.Info().Str("container", container.Name)
+	if mode == "memory" || mode == "all" {
+		logEvent = logEvent.Int64("memory_limit", s.Mem.Limit).
+			Uint64("memory_time to decrease", s.Mem.GraceTicks).
+			Uint64("memory_total", s.Mem.PrevTotal).
+			Uint64("integral", s.Mem.Integral)
+	}
+	if mode == "cpu" || mode == "all" {
+		logEvent = logEvent.Int64("cpu_limit", s.Cpu.Limit).
+			Uint64("cpu_average", s.Cpu.Avg)
+	}
+	logEvent.Msg("updated stats")
 	return nil
+}
+
+func (r *Reconciler) executeStatsCmd(container corev1.Container) ([]byte, error) {
+	var cmd *exec.Cmd
+	var err error
+	var output []byte
+	retryNb := 3
+
+	if strings.ToLower(container.Name) == "kondense" {
+		cmd = exec.Command("cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
+	} else {
+		cmd = exec.Command("kubectl", "exec", "-i", r.Name, "-c", container.Name, "--", "cat", "/sys/fs/cgroup/memory.pressure", "/sys/fs/cgroup/cpu.stat")
+	}
+	for i := 0; i < retryNb; i++ {
+		output, err = cmd.Output()
+		if err == nil {
+			return output, nil
+		}
+		time.Sleep(50 * time.Millisecond * time.Duration(i+1))
+	}
+	return nil, err
 }
 
 func (r *Reconciler) UpdateMemStats(containerName string, txt []string) error {

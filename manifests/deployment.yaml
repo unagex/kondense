@@ -27,3 +27,6 @@ spec:
           limits:
             cpu: 80m
             memory: 100M
+        env:
+        - name: STRESS-NG_MODE
+          value: "cpu"  #"cpu" || "memory" || "all"
