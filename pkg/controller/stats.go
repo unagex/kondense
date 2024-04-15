@@ -14,7 +14,7 @@ const (
 )
 
 const (
-	DefaultCPUMin       uint64  = 50
+	DefaultCPUMin       uint64  = 80
 	DefaultCPUMax       uint64  = 100_000
 	DefaultCPUMaxInc    float64 = 0.5
 	DefaultCPUMaxDec    float64 = 0.1

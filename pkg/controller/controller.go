@@ -32,7 +32,8 @@ func (r *Reconciler) Reconcile() {
 	var loopTime time.Duration
 	for {
 		// one iteration should take 1 second.
-		time.Sleep(loopTime - time.Second)
+		log.Print(loopTime)
+		time.Sleep(time.Second - loopTime)
 		start = time.Now()
 
 		pod, err := r.Client.CoreV1().Pods(r.Namespace).Get(context.TODO(), r.Name, v1.GetOptions{})
