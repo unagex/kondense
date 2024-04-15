@@ -194,7 +194,7 @@ func (r *Reconciler) KondenseCPU(container corev1.Container) float64 {
 	return max(adj, -s.Cpu.MaxDec)
 }
 
-func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor float64) error {
+func (r *Reconciler) Adjust(containerName string, memFactor, cpuFactor float64) error {
 	s := r.CStats[containerName]
 	url := fmt.Sprintf("https://kubernetes.default.svc.cluster.local/api/v1/namespaces/%s/pods/%s", r.Namespace, r.Name)
 
