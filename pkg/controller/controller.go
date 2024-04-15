@@ -28,8 +28,12 @@ type Reconciler struct {
 func (r *Reconciler) Reconcile() {
 	r.CStats = ContainerStats{}
 
+	var start time.Time
+	var loopTime time.Duration
 	for {
-		time.Sleep(1 * time.Second)
+		// one iteration should take 1 second.
+		time.Sleep(loopTime - time.Second)
+		start = time.Now()
 
 		pod, err := r.Client.CoreV1().Pods(r.Namespace).Get(context.TODO(), r.Name, v1.GetOptions{})
 		if err != nil {
@@ -51,5 +55,7 @@ func (r *Reconciler) Reconcile() {
 		}
 
 		wg.Wait()
+
+		loopTime = time.Since(start)
 	}
 }
