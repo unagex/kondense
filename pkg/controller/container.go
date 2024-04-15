@@ -245,7 +245,16 @@ func (r *Reconciler) Adjust(containerName string, memFactor float64, cpuFactor f
 		return fmt.Errorf("failed to patch container, want status code: %d, got %d",
 			http.StatusOK, resp.StatusCode)
 	}
-	log.Info().Str("container", containerName).Float64("memFactor", memFactor).Uint64("newMemory", newMemory).Float64("cpuFactor", cpuFactor).Uint64("newCPU", newCPU).Msg("patched container")
+
+	memFactorLog, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", memFactor), 64)
+	cpuFactorLog, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", cpuFactor), 64)
+	log.Info().
+		Str("container", containerName).
+		Float64("memory factor", memFactorLog).
+		Uint64("new memory", newMemory).
+		Float64("cpu factor", cpuFactorLog).
+		Uint64("new cpu", newCPU).
+		Msg("patched container")
 
 	s.Mem.Integral = 0
 
