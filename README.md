@@ -72,11 +72,9 @@ spec:
     image: kondense/kondense:1.0.1
     resources:
       limits:
-        cpu: 0.3
-        memory: 50M
+        cpu: 80m
+        memory: 100M
 ```
-
-
 
 **Notes:**
 1. The pod should have a QoS of `Guaranteed`. In other words, we need to add resources limits for each containers.
@@ -104,8 +102,8 @@ Kondense is configurable via environment variables in the kondense container.
       image: kondense/kondense:1.0.1
       resources:
         limits:
-          cpu: 0.3
-          memory: 50M
+          cpu: 80m
+          memory: 100M
       env:
       - name: <CONTAINER NAME>_MEMORY_MIN
         value: "100m"
