@@ -90,7 +90,6 @@ rules:
     verbs: ["create"]
 ```
 
-
 ## Configuration
 
 Kondense is configurable via environment variables in the kondense container.
