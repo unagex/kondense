@@ -1,5 +1,5 @@
 # Create a service account, a clusterRole, a clusterRoleBinding and a Pod.
-# The Pod will have Kondense enabled and will do dynamic memory resize of the nginx container.
+# The Pod will have Kondense enabled and will do dynamic resources resize of the nginx container.
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -49,5 +49,5 @@ spec:
     image: kondense/kondense:1.0.1
     resources:
       limits:
-        cpu: 0.3
-        memory: 50M
+        cpu: 0.08
+        memory: 100M

@@ -6,12 +6,16 @@
 
 <img src="./logo.png" alt="drawing" width="150"/>
 
-Kondense is an automated memory sizing tool. It runs as a sidecar in kubernetes pods.
+Kondense is an automated resources sizing tool. It runs as a sidecar in kubernetes pods.
 
 ## Background
+
+### Memory
 Kondense uses memory pressure to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
-Allocated memory is not a good proxy for required memory. Many libraries used during startup are loaded into memory only to be never touched again afterwards. 
+### CPU
+Kondense resize CPU based on CPU usage. Kondense
+resize containers to 80% of its CPU usage. 20% is kept as default safety measure.
 
 ## Requirements
 
@@ -87,7 +91,7 @@ rules:
     verbs: ["create"]
 ```
 
-After adding the kondense container, the nginx container memory will be updated dynamically without any container restart.
+After adding the kondense container, the nginx container resources will be updated dynamically without any container restart.
 
 ## Configuration
 
@@ -109,21 +113,36 @@ Kondense is configurable via environment variables in the kondense container.
 
 If we have a container named `nginx` in our pod, the variable name should be `NGINX_MEMORY_INTERVAL`.
 
-#### Environment variables
+### Environment variables
+#### Global
 
 | Name | Default value | Description |
 | --- | --- | --- |
 | EXCLUDE | "" | Comma separated list of containers to not kondense. |
+
+#### Memory
+| Name | Default value | Description |
+| --- | --- | --- |
 | \<CONTAINER NAME>\_MEMORY_MIN | 50M | Minimum memory of the container. Kondense will never resize below that limit. |
 | \<CONTAINER NAME>\_MEMORY_MAX | 100G | Maximum memory of the container. Kondense will never resize above that limit. |
 | \<CONTAINER NAME>\_MEMORY_TARGET_PRESSURE | 10000 | Target memory pressure in microseconds. Kondense will take corrective actions to obtain it. |
-| \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
 | \<CONTAINER NAME>\_MEMORY_INTERVAL | 10 | Kondense targets cumulative memory delays over the sampling period of this interval in seconds. |
 | \<CONTAINER NAME>\_MEMORY_MAX_INC | 0.5 | Maximum memory increase for one correction. e.g. 0.5 is a 50% increase. |
 | \<CONTAINER NAME>\_MEMORY_MAX_DEC | 0.02 | Maximum memory decrease for one correction. e.g. 0.02 is a 2% decrease. |
 | \<CONTAINER NAME>\_MEMORY_COEFF_INC | 20 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations: when the coeff is 20, the curve reaches the adjustment limit when pressure is 20 times the target pressure. |
 | \<CONTAINER NAME>\_MEMORY_COEFF_DEC | 10 | Kondense back off exponentially as we deviate from the target pressure. This coeff defines how sensitive  we are to fluctations. The adjustment becomes exponentially more aggressive as observed pressure falls below the target pressure and reaches the adjustment limit. |
 
-#### More
-- Kondense is based on [Facebook senpai](https://github.com/facebookincubator/senpai/tree/main)
+#### CPU
+| Name | Default value | Description |
+| --- | --- | --- |
+| \<CONTAINER NAME>\_CPU_MIN | 0.08 | Minimum CPU of the container. Kondense will never resize below that limit. |
+| \<CONTAINER NAME>\_CPU_MAX | 100 | Maximum CPU of the container. Kondense will never resize above that limit. |
+| \<CONTAINER NAME>\_CPU_MAX_INC | 0.5 | Maximum CPU increase for one correction. e.g. 0.5 is a 50% increase. |
+| \<CONTAINER NAME>\_CPU_MAX_DEC | 0.1 | Maximum CPU decrease for one correction. e.g. 0.1 is a 10% increase. |
+| \<CONTAINER NAME>\_CPU_TARGET_AVG | 0.8 | Target CPU average for the container. It is from 0 to 1. e.g. 0.8 means a target cpu usage of 80%. |
+| \<CONTAINER NAME>\_CPU_INTERVAL | 6 | Target CPU average for the container. It is from 0 to 1. e.g. 0.8 means a target cpu usage of 80%. |
+| \<CONTAINER NAME>\_CPU_COEFF | 6 | Used to calculate the new cpu limit when a cpu increase is needed. The higher the coeff, the higher the new cpu limit. |
+
+### More
+- Kondense memory resize is based on [Facebook senpai](https://github.com/facebookincubator/senpai/tree/main)
 - Kondense is active on himself by default
