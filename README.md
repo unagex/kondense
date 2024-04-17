@@ -6,7 +6,7 @@
 
 <img src="./logo.png" alt="drawing" width="150"/>
 
-Kondense is an automated resources sizing tool. It runs as a sidecar in kubernetes pods.
+Kondense is an automated resource sizing tool. It runs as a sidecar in kubernetes pods.
 
 ## Background
 
@@ -14,8 +14,7 @@ Kondense is an automated resources sizing tool. It runs as a sidecar in kubernet
 Kondense uses memory pressure to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
 
 ### CPU
-Kondense resize CPU based on CPU usage. Kondense
-resize containers to 80% of its CPU usage. 20% is kept as default safety measure.
+Kondense resizes CPU based on CPU usage, default to 80%.
 
 ## Requirements
 
