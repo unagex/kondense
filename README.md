@@ -75,6 +75,8 @@ spec:
         memory: 50M
 ```
 
+After adding the kondense container, the nginx container resources are updated without any container restart.
+
 **Notes:**
 1. The pod should have a QoS of `Guaranteed`. In other words, we need to add resources limits for each containers.
 2. The service account `nginx-user` should have the following rules:
@@ -88,7 +90,6 @@ rules:
     verbs: ["create"]
 ```
 
-After adding the kondense container, the nginx container resources will be updated dynamically without any container restart.
 
 ## Configuration
 
