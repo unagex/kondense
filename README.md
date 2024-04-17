@@ -69,7 +69,7 @@ spec:
         cpu: 0.1
         memory: 100M
   - name: kondense
-    image: kondense/kondense:1.0.1
+    image: kondense/kondense:1.1.0
     resources:
       limits:
         cpu: 80m
@@ -99,7 +99,7 @@ Kondense is configurable via environment variables in the kondense container.
 ```yaml
     ...
     - name: kondense
-      image: kondense/kondense:1.0.1
+      image: kondense/kondense:1.1.0
       resources:
         limits:
           cpu: 80m
