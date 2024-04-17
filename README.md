@@ -107,11 +107,11 @@ Kondense is configurable via environment variables in the kondense container.
           cpu: 0.3
           memory: 50M
       env:
-      - name: <CONTAINER NAME>_MEMORY_INTERVAL
-        value: "5"
+      - name: <CONTAINER NAME>_MEMORY_MIN
+        value: "100m"
 ```
 
-If we have a container named `nginx` in our pod, the variable name should be `NGINX_MEMORY_INTERVAL`.
+If we have a container named `nginx` in our pod, the variable name should be `NGINX_MEMORY_MIN`.
 
 ### Environment variables
 #### Global
