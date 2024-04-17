@@ -43,7 +43,7 @@ spec:
     image: nginx:latest
     resources:
       limits:
-        cpu: 0.1
+        cpu: 100m
         memory: 100M
   - name: kondense
     image: kondense/kondense:1.1.0

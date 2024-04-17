@@ -48,8 +48,8 @@ spec:
     image: nginx:latest
     resources:
       limits:
-        cpu: 80M
-        memory: 50M
+        cpu: 100m
+        memory: 100M
 ```
 
 Add Kondense as a sidecar:
