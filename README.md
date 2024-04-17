@@ -49,8 +49,8 @@ spec:
     image: nginx:latest
     resources:
       limits:
-        cpu: 0.1
-        memory: 100M
+        cpu: 80M
+        memory: 50M
 ```
 
 Add Kondense as a sidecar:
@@ -73,7 +73,7 @@ spec:
     resources:
       limits:
         cpu: 80m
-        memory: 100M
+        memory: 50M
 ```
 
 **Notes:**
@@ -103,7 +103,7 @@ Kondense is configurable via environment variables in the kondense container.
       resources:
         limits:
           cpu: 80m
-          memory: 100M
+          memory: 50M
       env:
       - name: <CONTAINER NAME>_MEMORY_MIN
         value: "100m"

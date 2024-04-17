@@ -49,5 +49,5 @@ spec:
     image: kondense/kondense:1.1.0
     resources:
       limits:
-        cpu: 0.08
-        memory: 100M
+        cpu: 80m
+        memory: 50M
