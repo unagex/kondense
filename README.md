@@ -11,10 +11,10 @@ Kondense is an automated resource sizing tool. It runs as a sidecar in kubernete
 ## Background
 
 ### Memory
-Kondense uses memory pressure to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.
+Kondense uses memory pressure to apply just the right amount of memory on a container to page out the unused memory while not getting out-of-memory killed.</br>[How is memory calculated ?](./doc/memory.md)
 
 ### CPU
-Kondense resizes CPU based on CPU usage, default to 80%.
+Kondense resizes CPU based on CPU usage, default to 80%.</br>[How is CPU calculated ?](./doc/cpu.md)
 
 ## Requirements
 
