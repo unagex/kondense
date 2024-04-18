@@ -19,14 +19,15 @@ Kondense resizes CPU based on CPU usage, default to 80%.</br>[How is CPU calcula
 ## Requirements
 
 ### On Kubernetes
-1. The Kubernetes cluster must run on Linux.
-2. Kubernetes version >= 1.27.
-3. Containerd version >= 1.6.9.
-4. Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled.
+<!-- - Kubernetes version >= 1.27. -->
+- The Kubernetes cluster must run on Linux.
+- Containerd version >= 1.6.9.
+- Kubernetes should have the feature gate `InPlacePodVerticalScaling` enabled.
 
 ### On Containers
-1. Containers should have the binary `cat`.
-2. Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
+- Containers should include the linux kernel version >= 4.20. Ensure the file `/sys/fs/cgroup/memory.pressure` exists in the container to verify it.
+
+You can build your containers from the image `alpine` to be sure.
 
 ## Example
 Try the example on minikube:
