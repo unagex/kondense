@@ -142,5 +142,5 @@ If we have a container named `nginx` in our pod, the variable name should be `NG
 | \<CONTAINER NAME>\_CPU_COEFF | 6 | Used to calculate the new cpu limit when a cpu increase is needed. The higher the coeff, the higher the new cpu limit. |
 
 ### More
-- Kondense memory resize is based on [Facebook senpai](https://github.com/facebookincubator/senpai/tree/main)
+- Kondense memory resize is based on Meta [Transparent Memory Offloading (TMO)](https://www.cs.cmu.edu/~dskarlat/publications/tmo_asplos22.pdf)
 - Kondense is active on himself by default
