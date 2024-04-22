@@ -112,26 +112,26 @@ func (r *Reconciler) UpdateCPUStats(containerName string, txt []string) error {
 		return err
 	}
 
-	if len(s.Cpu.Usage) == int(s.Cpu.Interval) {
-		// Pop oldest probe if Usage is full
-		s.Cpu.Usage = s.Cpu.Usage[1:]
+	if len(s.Cpu.Probes) == int(s.Cpu.Interval) {
+		// Pop oldest probe if Probes is full
+		s.Cpu.Probes = s.Cpu.Probes[1:]
 	}
 
-	p := CPUProbe{
-		Usage: total,
+	p := Probe{
+		Total: total,
 		T:     s.LastUpdate,
 	}
-	s.Cpu.Usage = append(s.Cpu.Usage, p)
+	s.Cpu.Probes = append(s.Cpu.Probes, p)
 
 	// We can calculate when we have 2 or more probes
-	if len(s.Cpu.Usage) == 1 {
+	if len(s.Cpu.Probes) == 1 {
 		return nil
 	}
 
-	oldestProbe := s.Cpu.Usage[0]
-	newestProbe := s.Cpu.Usage[len(s.Cpu.Usage)-1]
+	oldestProbe := s.Cpu.Probes[0]
+	newestProbe := s.Cpu.Probes[len(s.Cpu.Probes)-1]
 
-	delta := newestProbe.Usage - oldestProbe.Usage
+	delta := newestProbe.Total - oldestProbe.Total
 	t := newestProbe.T.Sub(oldestProbe.T)
 
 	avgCPU := float64(delta) / max(1, float64(t.Microseconds()))

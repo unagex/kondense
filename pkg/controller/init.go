@@ -51,9 +51,9 @@ func (r *Reconciler) InitCStats(pod *corev1.Pod) {
 		r.CStats[containerStatus.Name].Mem.Limit = mem
 		r.CStats[containerStatus.Name].Cpu.Limit = int64(cpu * 1000)
 
-		if r.CStats[containerStatus.Name].Cpu.Usage == nil {
+		if r.CStats[containerStatus.Name].Cpu.Probes == nil {
 			// Init queue of capacity Interval
-			r.CStats[containerStatus.Name].Cpu.Usage = make([]CPUProbe, 0, r.CStats[containerStatus.Name].Cpu.Interval)
+			r.CStats[containerStatus.Name].Cpu.Probes = make([]Probe, 0, r.CStats[containerStatus.Name].Cpu.Interval)
 		}
 	}
 }

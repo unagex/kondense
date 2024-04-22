@@ -80,13 +80,14 @@ type CPU struct {
 	Coeff uint64
 	// Interval is the interval in seconds used to calculate the cpu average usage.
 	Interval uint64
-	// Usage is a queue to store total cpu usage at a specific time.
-	Usage []CPUProbe
+	// Probes is a queue to store total cpu usage at a specific time.
+	Probes []Probe
 	// Avg is the cpu average usage in millicpus.
 	Avg uint64
 }
 
-type CPUProbe struct {
-	Usage uint64
+// Probe has a total value and a timestamp of when this total was taken.
+type Probe struct {
+	Total uint64
 	T     time.Time
 }
