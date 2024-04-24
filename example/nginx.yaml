@@ -1,4 +1,4 @@
-# Create a service account, a clusterRole, a clusterRoleBinding and a Pod.
+# Create a service account, clusterRole, clusterRoleBinding and a Pod.
 # The Pod will have Kondense enabled and will do dynamic resources resize of the nginx container.
 ---
 apiVersion: v1
