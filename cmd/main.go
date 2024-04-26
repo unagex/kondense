@@ -43,5 +43,7 @@ func main() {
 		Namespace: namespace,
 	}
 
+	log.Info().Msg("kondense started")
+
 	reconciler.Reconcile()
 }
