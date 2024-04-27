@@ -3,10 +3,12 @@ package controller
 import (
 	"context"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -57,5 +59,25 @@ func (r *Reconciler) Reconcile() {
 		wg.Wait()
 
 		loopTime = time.Since(start)
+	}
+}
+
+func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	exclude := utils.ContainersToExclude()
+	if slices.Contains(exclude, container.Name) {
+		return
+	}
+
+	err := r.UpdateStats(pod, container)
+	if err != nil {
+		log.Error().Err(err)
+		return
+	}
+
+	err = r.KondenseContainer(container)
+	if err != nil {
+		log.Error().Err(err)
 	}
 }

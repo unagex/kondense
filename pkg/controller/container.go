@@ -6,36 +6,14 @@ import (
 	"math"
 	"net/http"
 	"os/exec"
-	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/unagex/kondense/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 )
-
-func (r *Reconciler) ReconcileContainer(pod *corev1.Pod, container corev1.Container, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	exclude := utils.ContainersToExclude()
-	if slices.Contains(exclude, container.Name) {
-		return
-	}
-
-	err := r.UpdateStats(pod, container)
-	if err != nil {
-		log.Error().Err(err)
-		return
-	}
-
-	err = r.KondenseContainer(container)
-	if err != nil {
-		log.Error().Err(err)
-	}
-}
 
 func (r *Reconciler) UpdateStats(pod *corev1.Pod, container corev1.Container) error {
 	var err error
