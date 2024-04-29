@@ -9,10 +9,10 @@ load:
 	minikube image load ${IMG}
 
 deploy:
-	kubectl apply -f manifests
+	kubectl apply -f dev
 
 undeploy:
-	kubectl delete -f manifests
+	kubectl delete -f dev
 
 push:
 	docker push ${IMG}
