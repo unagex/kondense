@@ -1,4 +1,4 @@
-# Create a service account, clusterRole, clusterRoleBinding and a Pod.
+# Create a service account, role, roleBinding and a Pod.
 # The Pod will have Kondense enabled and will do dynamic resources resize of the nginx container.
 ---
 apiVersion: v1
@@ -8,7 +8,7 @@ metadata:
   namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: kondense
 rules:
@@ -20,7 +20,7 @@ rules:
     verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: kondense
 subjects:
@@ -29,7 +29,7 @@ subjects:
     namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: kondense
 ---
 apiVersion: v1
