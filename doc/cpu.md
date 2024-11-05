@@ -2,7 +2,7 @@
 Kondense resize each container CPU every second with the following steps.
 
 ## 1. Calculate average CPU usage
-Kondense calculate the average CPU usage over the last `INTERVAL` seconds. By default, `INTERVAL` is 10 seconds.
+Kondense calculate the average CPU usage over the last `INTERVAL` seconds. By default, `INTERVAL` is 6 seconds.
 
 ### 2. Calculate new CPU
 We need the `TARGET_AVG` to calculate the new CPU. By default, `TARGET_AVG` is 0.8 so 80%.

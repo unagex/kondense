@@ -138,7 +138,7 @@ If we have a container named `nginx` in our pod, the variable name should be `NG
 | \<CONTAINER NAME>\_CPU_MAX_INC | 0.5 | Maximum CPU increase for one correction. e.g. 0.5 is a 50% increase. |
 | \<CONTAINER NAME>\_CPU_MAX_DEC | 0.1 | Maximum CPU decrease for one correction. e.g. 0.1 is a 10% decrease. |
 | \<CONTAINER NAME>\_CPU_TARGET_AVG | 0.8 | Target CPU average for the container. It is from 0 to 1. e.g. 0.8 means a target cpu usage of 80%. |
-| \<CONTAINER NAME>\_CPU_INTERVAL | 6 | Target CPU average for the container. It is from 0 to 1. e.g. 0.8 means a target cpu usage of 80%. |
+| \<CONTAINER NAME>\_CPU_INTERVAL | 6 | CPU interval in seconds to calculate the CPU average. Each interval last 1 second.|
 | \<CONTAINER NAME>\_CPU_COEFF | 6 | Used to calculate the new cpu limit when a cpu increase is needed. The higher the coeff, the higher the new cpu limit. |
 
 ### More
